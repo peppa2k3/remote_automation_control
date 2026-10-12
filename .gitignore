@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+backend/src/generated/
+automation-data/
+credentials/
+browser-profiles/
+.verification/
+.DS_Store
