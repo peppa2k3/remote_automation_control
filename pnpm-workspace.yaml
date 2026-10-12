@@ -1,0 +1,16 @@
+packages:
+  - frontend
+  - backend
+  - agent-windows
+  - packages/*
+
+allowBuilds:
+  '@prisma/engines': true
+  '@tailwindcss/oxide': true
+  esbuild: true
+  prisma: true
+  sharp: true
+  unrs-resolver: false
+
+saveExact: true
+engineStrict: true

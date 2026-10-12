@@ -1,0 +1,9 @@
+node_modules
+dist
+.next
+coverage
+backend/src/generated
+.verification
+pnpm-lock.yaml
+**/*.md
+frontend/next-env.d.ts

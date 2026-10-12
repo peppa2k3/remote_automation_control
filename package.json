@@ -1,0 +1,34 @@
+{
+  "name": "home-automation-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.12.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=11 <12"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"pnpm --filter @automation/backend dev\" \"pnpm --filter @automation/frontend dev\"",
+    "lint": "eslint . && prettier --check . && pnpm docs:check",
+    "format": "prettier --write .",
+    "typecheck": "pnpm db:generate && pnpm --filter @automation/contracts build && pnpm -r typecheck",
+    "test": "pnpm --filter @automation/contracts build && pnpm -r test",
+    "build": "pnpm db:generate && pnpm -r build",
+    "db:generate": "pnpm --filter @automation/backend db:generate",
+    "db:migrate": "pnpm --filter @automation/backend db:migrate",
+    "docs:check": "node scripts/check-docs.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.4.0",
+    "@types/node": "24.19.2",
+    "concurrently": "9.2.5",
+    "eslint": "10.9.1",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vitest": "4.1.11"
+  }
+}
