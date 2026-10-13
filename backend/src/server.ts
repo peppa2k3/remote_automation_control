@@ -3,6 +3,8 @@ import pino from 'pino';
 import { createApp } from './app.js';
 import { parseConfig } from './config.js';
 import { createDatabase } from './database.js';
+import { createAuthStore } from './modules/auth/store.js';
+import { AuthService, defaultAuthSettings } from './modules/auth/service.js';
 
 const parsed = (() => {
   try {
@@ -15,6 +17,14 @@ const parsed = (() => {
 const logger = pino({ level: parsed.LOG_LEVEL });
 const db = parsed.DATABASE_URL ? createDatabase(parsed.DATABASE_URL) : undefined;
 const app = createApp({
+  auth: db
+    ? new AuthService(createAuthStore(db), {
+        ...defaultAuthSettings,
+        sessionSeconds: parsed.AUTH_SESSION_SECONDS,
+        absoluteSeconds: parsed.AUTH_ABSOLUTE_SECONDS,
+      })
+    : undefined,
+  secureCookies: parsed.NODE_ENV === 'production',
   frontendOrigin: parsed.FRONTEND_ORIGIN,
   checkDatabase: async () => {
     if (!db) throw new Error('Database is not configured');

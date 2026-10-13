@@ -5,6 +5,8 @@ const schema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     HOST: z.string().default('127.0.0.1'),
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+    AUTH_SESSION_SECONDS: z.coerce.number().int().min(60).max(86400).default(1800),
+    AUTH_ABSOLUTE_SECONDS: z.coerce.number().int().min(60).max(604800).default(28800),
     FRONTEND_ORIGIN: z.url().default('http://localhost:3000'),
     DATABASE_URL: z
       .string()
@@ -15,6 +17,11 @@ const schema = z
       .default('info'),
   })
   .superRefine((config, context) => {
+    if (config.AUTH_ABSOLUTE_SECONDS < config.AUTH_SESSION_SECONDS)
+      context.addIssue({
+        code: 'custom',
+        message: 'Absolute session TTL must not be shorter than session TTL',
+      });
     if (
       config.NODE_ENV === 'production' &&
       (!config.DATABASE_URL || !config.FRONTEND_ORIGIN.startsWith('https://'))

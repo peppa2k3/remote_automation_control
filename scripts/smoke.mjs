@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
 import assert from 'node:assert/strict';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 async function freePort() {
   const server = createServer();
@@ -25,6 +26,8 @@ const env = {
 };
 if (!env.DATABASE_URL) delete env.DATABASE_URL;
 const children = [];
+let fixture;
+let db;
 function start(args, cwd, extraEnv = {}) {
   const child = spawn(process.execPath, args, {
     cwd,
@@ -69,17 +72,67 @@ try {
   start(
     ['node_modules/next/dist/bin/next', 'start', '-H', '127.0.0.1', '-p', String(webPort)],
     'frontend',
-    { NODE_ENV: 'production', API_INTERNAL_BASE_URL: apiUrl },
+    { NODE_ENV: 'production', API_INTERNAL_BASE_URL: apiUrl, AUTH_FRONTEND_ORIGIN: webUrl },
   );
-  const html = await (await waitFor(webUrl)).text();
-  assert.ok(html.includes('Automation') && html.includes('Kết nối API'));
-  assert.ok(html.includes('API đang hoạt động'));
-  assert.ok(
-    html.includes(process.env.SMOKE_DATABASE_URL ? 'Database sẵn sàng' : 'Database chưa sẵn sàng'),
-  );
+  const loginHtml = await (await waitFor(`${webUrl}/login`)).text();
+  assert.ok(loginHtml.includes('Đăng nhập quản trị'));
+  const anonymous = await fetch(webUrl, { redirect: 'manual' });
+  assert.equal(anonymous.status, 307);
+  assert.equal(anonymous.headers.get('location'), '/login');
+  assert.equal((await fetch(`${apiUrl}/admin/audit-logs`)).status, 401);
+  if (env.DATABASE_URL) {
+    const { createDatabase } = await import('../backend/dist/database.js');
+    const { hashPassword, digest } = await import('../backend/dist/modules/auth/crypto.js');
+    db = createDatabase(env.DATABASE_URL);
+    const email = `smoke-${randomUUID()}@example.test`,
+      password = randomBytes(24).toString('hex');
+    const user = await db.user.create({
+      data: { email, passwordHash: await hashPassword(password), role: 'ADMIN' },
+    });
+    fixture = { userId: user.id, accountKey: digest(`login.account:${email}`) };
+    async function mutation(action, cookie, csrf) {
+      return fetch(`${webUrl}/api/v1/auth/${action}`, {
+        method: 'POST',
+        headers: {
+          Origin: webUrl,
+          'Content-Type': 'application/json',
+          ...(cookie ? { Cookie: cookie } : {}),
+          ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+        },
+        body: action === 'login' ? JSON.stringify({ email, password }) : '{}',
+      });
+    }
+    const login = await mutation('login');
+    assert.equal(login.status, 200);
+    const auth = (await login.json()).data;
+    const cookie = login.headers.get('set-cookie')?.split(';')[0];
+    assert.ok(cookie && login.headers.get('set-cookie').includes('HttpOnly'));
+    const home = await fetch(webUrl, { headers: { Cookie: cookie }, redirect: 'manual' });
+    assert.equal(home.status, 200);
+    const html = await home.text();
+    assert.ok(html.includes('API đang hoạt động') && html.includes('Database sẵn sàng'));
+    assert.equal((await mutation('refresh', cookie)).status, 403);
+    const refresh = await mutation('refresh', cookie, auth.csrfToken);
+    assert.equal(refresh.status, 200);
+    const next = (await refresh.json()).data;
+    const rotatedCookie = refresh.headers.get('set-cookie')?.split(';')[0];
+    assert.ok(rotatedCookie && rotatedCookie !== cookie);
+    assert.equal(
+      (await fetch(`${webUrl}/api/v1/auth/me`, { headers: { Cookie: cookie } })).status,
+      401,
+    );
+    assert.equal((await mutation('logout', rotatedCookie, next.csrfToken)).status, 200);
+    assert.equal(
+      (await fetch(webUrl, { headers: { Cookie: rotatedCookie }, redirect: 'manual' })).status,
+      307,
+    );
+    console.log(
+      'PASS: PostgreSQL-backed login, protected SSR, CSRF, session rotation and logout through frontend proxy',
+    );
+  }
   const manifest = await (await fetch(`${webUrl}/manifest.webmanifest`)).json();
   assert.equal(manifest.display, 'standalone');
-  console.log('PASS: frontend renders real API/DB state and manifest');
+  console.log('PASS: anonymous redirect, login page and manifest');
   const agent = start(['dist/cli.js'], 'agent-windows', {
     AGENT_API_BASE_URL: apiUrl,
     AGENT_ALLOW_LOCAL_HTTP: 'true',
@@ -98,4 +151,15 @@ try {
           }),
     ),
   );
+  if (db) {
+    try {
+      if (fixture) {
+        await db.auditLog.deleteMany({ where: { actorId: fixture.userId } });
+        await db.user.delete({ where: { id: fixture.userId } });
+        await db.authThrottle.deleteMany({ where: { key: fixture.accountKey } });
+      }
+    } finally {
+      await db.$disconnect();
+    }
+  }
 }

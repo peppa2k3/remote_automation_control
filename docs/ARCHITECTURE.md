@@ -42,9 +42,10 @@ Publisher ở VPS: lưu fingerprint và external state trước side effect; tim
 ## Phần khởi tạo hiện tại
 
 - pnpm monorepo, TypeScript strict, ESLint, Vitest, CI và build từng package.
-- Next.js trang tình trạng kết nối API/DB; manifest + icon nền PWA. Offline cache/installability đầy đủ thuộc prompt Dashboard, chưa cache dữ liệu riêng tư.
+- Next.js login và dashboard yêu cầu session server-side; proxy auth cùng origin, trạng thái kết nối API/DB, manifest + icon nền PWA. Offline cache/installability đầy đủ thuộc prompt Dashboard, chưa cache dữ liệu riêng tư.
 - Express `/api/v1/health/live`, `/health/ready`, envelope, request correlation, lỗi an toàn, CORS allowlist, Helmet và rate limit.
-- Prisma schema `SystemCheck` cho integration migration, PostgreSQL 17 local Compose, Dockerfile API/FE. Chưa tạo bảng nghiệp vụ trước prompt tương ứng.
+- Prisma `SystemCheck` cho integration migration, User/AuthSession/AuthThrottle/AuditLog cho auth 004, PostgreSQL 17 local Compose, Dockerfile API/FE. Các bảng nghiệp vụ khác thuộc prompt tương ứng.
+- Auth dùng scrypt + session opaque hash ở PostgreSQL, CSRF/Origin, durable login throttle, owner CLI và quyền server-side; [AUTH](AUTH.md) và [ADR 001](ADR/001-admin-sessions.md). MFA mới có kế hoạch, device auth tách riêng.
 - Agent CLI kiểm tra kết nối outbound, timeout và xác thực response; chưa pairing/heartbeat/claim hoặc tự nhận job.
 - Socket.IO, FFmpeg, MinIO và Meta thuộc prompt riêng; chưa kết nối service/provider thật.
 

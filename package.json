@@ -8,6 +8,7 @@
     "pnpm": ">=11 <12"
   },
   "scripts": {
+    "owner:bootstrap": "pnpm --filter @automation/backend owner:bootstrap",
     "setup:local": "node scripts/setup-local.mjs",
     "stack:check": "node scripts/check-stack.mjs",
     "dev": "concurrently -k -n api,web \"pnpm --filter @automation/backend dev\" \"pnpm --filter @automation/frontend dev\"",

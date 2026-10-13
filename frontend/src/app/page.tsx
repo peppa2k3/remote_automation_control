@@ -1,10 +1,15 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getServerSession } from '../features/auth/server-session';
+import { SessionControls } from '../features/auth/session-controls';
 import { RefreshButton } from '../components/refresh-button';
 import { getPlatformStatus } from '../lib/platform-status';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
+  const session = await getServerSession();
+  if (!session) redirect('/login');
   const status = await getPlatformStatus(
     process.env.API_INTERNAL_BASE_URL ??
       process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -38,6 +43,7 @@ export default async function Home() {
         </Link>
         <span className="environment">LOCAL / BOOTSTRAP</span>
       </header>
+      <SessionControls initial={session} />
       <section className="intro">
         <p className="eyebrow">HOME AUTOMATION PLATFORM</p>
         <h1>
@@ -91,8 +97,8 @@ export default async function Home() {
           <p className="eyebrow">BƯỚC TIẾP THEO</p>
           <h2>Kết nối Windows Agent</h2>
           <p>
-            Đăng nhập quản trị và ghép đôi thiết bị sẽ được triển khai ở prompt 004–005. Hiện CLI
-            Agent hỗ trợ kiểm tra kết nối với API.
+            Đăng nhập quản trị đã sẵn sàng; ghép đôi thiết bị sẽ được triển khai ở prompt 005. Hiện
+            CLI Agent hỗ trợ kiểm tra kết nối với API.
           </p>
         </div>
         <span className="planned">Đã lên kế hoạch</span>

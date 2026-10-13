@@ -29,7 +29,7 @@ describe('health and HTTP boundaries', () => {
   });
   it('rejects malformed/oversized bodies and routes that have not been built', async () => {
     const app = makeApp();
-    expect((await request(app).post('/api/v1/runs').send({})).status).toBe(404);
+    expect((await request(app).post('/api/v1/runs').send({})).status).toBe(401);
     const malformed = await request(app)
       .post('/api/v1/runs')
       .set('Content-Type', 'application/json')

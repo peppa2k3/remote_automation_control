@@ -1,5 +1,78 @@
 @import 'tailwindcss';
 
+.login-main {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+}
+.login-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 36px;
+  background: #122131;
+  border: 1px solid #26384b;
+  border-radius: 12px;
+}
+.login-card h1 {
+  font-size: 30px;
+}
+.auth-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+.auth-form label {
+  font-size: 14px;
+  color: #bac8d5;
+}
+.auth-form input {
+  width: 100%;
+  padding: 13px;
+  background: #0c1826;
+  border: 1px solid #39516a;
+  border-radius: 6px;
+  color: #f0f5f8;
+}
+.auth-form input:focus-visible {
+  outline: 2px solid #76e6bd;
+  outline-offset: 2px;
+}
+.auth-submit {
+  margin-top: 12px;
+  background: #1b3935 !important;
+  color: #76e6bd !important;
+}
+.auth-error {
+  color: #ffb4ab;
+  font-size: 14px;
+}
+.login-note {
+  margin-top: 24px;
+  color: #9eafbf;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.account-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 0;
+  border-bottom: 1px solid #26384b;
+}
+.account-panel strong {
+  overflow-wrap: anywhere;
+}
+.account-panel .card-label {
+  margin-top: 8px;
+}
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 :root {
   color-scheme: dark;
   --bg: #0c1826;

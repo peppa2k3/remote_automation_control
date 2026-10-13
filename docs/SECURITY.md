@@ -1,8 +1,8 @@
 # Bảo mật
 
-Bootstrap chỉ expose health. Chưa có endpoint tạo job/publish; không coi health công khai là cơ chế đăng nhập. Public health không trả connection string, stack trace hay provider secret. `requestId` do server sinh; log chỉ method/path/status/duration, không query/body/token.
+Health vẫn công khai; các route nhạy cảm yêu cầu session và quyền server-side. Chưa có endpoint tạo job/publish; không coi health công khai là cơ chế đăng nhập. Public health không trả connection string, stack trace hay provider secret. `requestId` do server sinh; log chỉ method/path/status/duration, không query/body/token.
 
-Request có body giới hạn 32 KB; CORS chỉ origin cấu hình; Helmet, rate limit, tắt X-Powered-By. Cookie/session, CSRF, MFA, RBAC và audit hành động nhạy cảm nằm ở prompt 004 trước mọi endpoint nghiệp vụ.
+Request có body giới hạn 32 KB; CORS chỉ origin cấu hình; Helmet, rate limit, tắt X-Powered-By. Prompt 004 đã thêm session hash server-side, scrypt, HttpOnly/SameSite/Secure production, Origin + CSRF, RBAC, durable brute-force limits và audit. [AUTH](AUTH.md) mô tả chính sách, giới hạn proxy, review và kế hoạch MFA; MFA chưa triển khai. Không log password/session/CSRF. Owner bootstrap không nhận password trong argument/env; Agent không dùng cookie admin.
 
 Dev Compose có project/volume riêng, port bind loopback. Không cấu hình Traefik/MinIO production trước khi kiểm tra thông tin thực. Không mount Docker socket hay toàn bộ ổ đĩa Windows.
 

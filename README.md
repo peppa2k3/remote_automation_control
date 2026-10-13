@@ -2,7 +2,7 @@
 
 Website/PWA điều phối Windows Agent tại nhà: nhận URL, tải và xử lý file, sau đó đăng lên Facebook Page qua API theo workflow đã cấu hình. VPS giữ trạng thái và quyền; Agent chủ động kết nối outbound.
 
-Repo đang ở giai đoạn bootstrap (prompt 001–003). Đã có trang tình trạng kết nối, API health, PostgreSQL/Prisma và Agent CLI chẩn đoán. Auth, pairing, durable queue, tải file và publish nằm trong backlog; chưa production-ready.
+Repo đã triển khai prompt 001–004: đăng nhập quản trị, owner bootstrap, session PostgreSQL, RBAC/CSRF/audit, trang tình trạng kết nối và Agent CLI chẩn đoán. Pairing, durable queue, tải file, publish và MFA thực còn trong backlog; chưa production-ready.
 
 ## Yêu cầu
 
@@ -34,10 +34,11 @@ Khi copy thủ công, điền `POSTGRES_PASSWORD` hex vào compose `.env` và c�
 docker compose -f infrastructure/compose/compose.yml --profile native up -d postgres-dev
 pnpm db:generate
 pnpm db:migrate
+pnpm owner:bootstrap
 pnpm dev
 ```
 
-Mở `http://localhost:3000`. API native ở `http://localhost:4000/api/v1`. Nếu đổi port thì cập nhật backend env và frontend/Agent URL tương ứng. `pnpm dev` chỉ start FE/API; Agent CLI chạy riêng:
+`owner:bootstrap` yêu cầu terminal tương tác: nhập email, mật khẩu ẩn 12–128 ký tự (tối đa 128 byte UTF-8), rồi xác nhận. Chỉ tạo một owner và từ chối ghi đè; không truyền password trong lệnh/env. Mở `http://localhost:3000/login` để đăng nhập. Dashboard chuyển về login nếu chưa có session. API native ở `http://localhost:4000/api/v1`. Nếu đổi port, cập nhật backend FRONTEND_ORIGIN và frontend AUTH_FRONTEND_ORIGIN/NEXT_PUBLIC_SITE_URL giống nhau, cùng URL API/Agent tương ứng. `pnpm dev` chỉ start FE/API; Agent CLI chạy riêng:
 
 ```powershell
 pnpm --filter @automation/agent-windows diagnose
@@ -55,7 +56,13 @@ docker compose -f infrastructure/compose/compose.yml --profile stack up --build 
 
 Frontend ở `http://localhost:3000`, API ở `http://localhost:4000/api/v1`; migration service chạy xong trước API. DB full stack không expose host. Đừng chạy đồng thời full stack và native FE/API trên cùng port. `postgres-dev` là DB/volume khác với DB của full stack.
 
-Chạy `pnpm stack:check` để kiểm tra health/DB, HTML trạng thái, manifest/icon và build assets trên stack đang chạy. Nếu đổi port, đặt `CHECK_API_BASE_URL` / `CHECK_SITE_URL`. `pnpm --filter @automation/agent-windows diagnose` kiểm tra Agent native kết nối stack này.
+Tạo owner riêng cho DB Docker bằng terminal tương tác (đừng dùng `-T`):
+
+```powershell
+docker compose -f infrastructure/compose/compose.yml exec backend pnpm owner:bootstrap
+```
+
+Chạy `pnpm stack:check` để kiểm tra health/DB, chuyển hướng dashboard chưa đăng nhập, trang login, manifest/icon và build assets. Nếu đổi port, đặt `CHECK_API_BASE_URL` / `CHECK_SITE_URL`. `pnpm --filter @automation/agent-windows diagnose` kiểm tra Agent native kết nối stack này. Chi tiết quyền/session và giới hạn MFA tại [AUTH](docs/AUTH.md).
 
 ```powershell
 docker compose -f infrastructure/compose/compose.yml --profile stack down
@@ -73,7 +80,7 @@ pnpm build
 pnpm docs:check
 ```
 
-Integration database chạy trên DB local/CI đã migrate:
+Integration database chạy trên DB **test riêng, chưa có owner**, đã migrate; đặt DATABASE_URL trong process đến DB đó trước khi chạy. Không dùng DB có tài khoản hoặc dữ liệu thật. Test chỉ xóa fixture của chính nó, không reset database:
 
 ```powershell
 $env:RUN_DB_TESTS = '1'
@@ -81,7 +88,7 @@ pnpm --filter @automation/backend test:integration
 Remove-Item Env:RUN_DB_TESTS
 ```
 
-CI chạy lint/typecheck/unit/build, PostgreSQL service + migration + DB integration, runtime smoke FE/API/Agent. Kết quả đã chạy và giới hạn nằm trong [nhật ký](docs/IMPLEMENTATION_LOG.md).
+CI chạy lint/typecheck/unit/build, PostgreSQL service + migration + DB integration, runtime smoke FE/API/Agent. `pnpm smoke` kiểm tra anonymous; đặt SMOKE_DATABASE_URL đến DB test đã migrate để kiểm tra thêm login/CSRF/refresh/logout qua frontend với tài khoản ADMIN tạm, tự dọn fixture. Kết quả đã chạy và giới hạn nằm trong [nhật ký](docs/IMPLEMENTATION_LOG.md).
 
 ## Cấu trúc và tài liệu
 

@@ -1,6 +1,33 @@
 import { z } from 'zod';
 
 export const CONTRACT_VERSION = 1;
+export const SESSION_COOKIE_NAME = 'automation_session';
+export const userRoleSchema = z.enum(['OWNER', 'ADMIN', 'VIEWER']);
+export type UserRole = z.infer<typeof userRoleSchema>;
+export const publicUserSchema = z.object({
+  id: z.uuid(),
+  email: z.email(),
+  role: userRoleSchema,
+  mfaEnabled: z.boolean(),
+});
+export const authDataSchema = z.object({
+  user: publicUserSchema,
+  csrfToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+  sessionExpiresAt: z.iso.datetime(),
+});
+export const loginInputSchema = z
+  .object({
+    email: z
+      .email()
+      .max(254)
+      .transform((value) => value.trim().toLowerCase()),
+    password: z
+      .string()
+      .min(1)
+      .max(128)
+      .refine((value) => new TextEncoder().encode(value).byteLength <= 128),
+  })
+  .strict();
 export const apiErrorSchema = z.object({ code: z.string(), message: z.string() });
 
 export function apiResponseSchema<T extends z.ZodType>(data: T) {
@@ -22,6 +49,8 @@ export const healthDataSchema = z.object({
   database: z.literal('up').optional(),
 });
 export const healthResponseSchema = apiResponseSchema(healthDataSchema);
+export const authResponseSchema = apiResponseSchema(authDataSchema);
+export type AuthData = z.infer<typeof authDataSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type HealthData = z.infer<typeof healthDataSchema>;
 

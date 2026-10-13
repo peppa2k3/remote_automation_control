@@ -13,10 +13,14 @@ for (const endpoint of ['live', 'ready']) {
   if (endpoint === 'ready') assert.equal(body.data.database, 'up');
   console.log(`PASS: stack health/${endpoint}`);
 }
-const page = await fetch(site, { signal: AbortSignal.timeout(10_000) });
+const anonymous = await fetch(site, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
+assert.equal(anonymous.status, 307);
+assert.equal(anonymous.headers.get('location'), '/login');
+assert.equal((await fetch(`${api}/admin/audit-logs`)).status, 401);
+const page = await fetch(`${site}/login`, { signal: AbortSignal.timeout(10_000) });
 assert.equal(page.status, 200);
 const html = await page.text();
-assert.ok(html.includes('API đang hoạt động') && html.includes('Database sẵn sàng'));
+assert.ok(html.includes('Đăng nhập quản trị'));
 for (const path of ['/icon.svg', '/manifest.webmanifest']) {
   assert.equal((await fetch(`${site}${path}`)).status, 200);
 }
@@ -35,5 +39,5 @@ for (const asset of assets) {
   assert.equal((await fetch(new URL(asset, site))).status, 200, 'Build asset unavailable');
 }
 console.log(
-  'PASS: frontend reflects real API/DB state, manifest, icon and JS/CSS assets are served',
+  'PASS: protected dashboard redirects, login page, manifest, icon and JS/CSS assets are served',
 );

@@ -39,3 +39,16 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - Giới hạn: chưa CI remote hoặc Browser visual QA; auth/pairing/queue/provider thuộc prompt sau. Native Next CLI smoke có cảnh báo standalone nhưng Docker standalone frontend đã được kiểm tra riêng.
 - Kết quả: DONE, chuyển prompt sang `docs/completed/003-database-local-stack.md`. Stack còn chạy để review tại `http://localhost:3000`.
 - Commit reference: subject `feat(003): verify PostgreSQL migration and local Docker stack`.
+
+## 2026-10-13 — 004 — Admin auth, RBAC và session
+
+- Prompt 003 đã commit tại `e036ea4`. Hoàn thành 004 với migration User/AuthSession/AuthThrottle/AuditLog, unique owner, scrypt có salt, session opaque chỉ lưu hash trong PostgreSQL và audit transaction.
+- CLI owner bootstrap nhập password ẩn/xác nhận qua TTY, không nhận argument/env, không ghi đè owner. HTTP auth login/me/sessions/refresh/logout/revoke-all; role/status mới nhất server-side, OWNER-only audit, chặn anonymous và tách admin/device auth.
+- Frontend login/proxy cùng origin, dashboard SSR bảo vệ, controls gia hạn/đăng xuất/thu hồi mọi session; HttpOnly/SameSite Strict, Secure production, CSRF gắn session + Origin, login throttle durable/account/IP và hash queue bounded.
+- PASS: lint, typecheck, 27 unit tests, build Windows và Docker; 6 integration PostgreSQL thật trên DB test riêng (bao gồm bootstrap/refresh/revoke/throttle concurrency); migration additive native và Docker, chạy lại idempotent; smoke không DB và có DB, Agent outbound, stack checker và Docker standalone auth runtime.
+- CLI thực PASS: tạo một owner test bằng nhập ẩn, lần hai từ chối ghi đè, argument/non-TTY bị từ chối. Xóa đúng fixture; integration chạy lại PASS. Runtime DB native/Docker đều OWNER=0; không tạo credentials mặc định cho người dùng.
+- Kiểm tra thực frontend proxy → API → DB: login/cookie/SSR, ADMIN/VIEWER denial, CSRF, rotation/token cũ bị chặn, logout/revoke-all. Phát hiện và sửa Prisma không deserialize kiểu void của SQL advisory lock bằng executeRaw, sau đó test PostgreSQL PASS.
+- Cập nhật README, env examples, API/database/security/operations/architecture, AUTH/MFA plan, ADR 001, smoke và Compose healthcheck. Giữ `.env`, volume và container project khác; không commit secret hoặc artifacts, không deploy/publish bên ngoài.
+- Giới hạn: MFA mới có kế hoạch và fail closed khi flag bật; chưa reset/user management/retention job, trusted proxy IP policy production, Browser visual QA hoặc CI remote. Native Next CLI smoke có warning standalone; Docker standalone được kiểm tra riêng. Pairing/queue/provider thuộc prompt sau.
+- Kết quả: DONE tại `docs/completed/004-admin-auth.md`. Stack chạy ở `http://localhost:3000/login`; người dùng tạo owner cá nhân qua CLI theo README. Tiếp theo 005, có thể thực hiện 011 sớm sau auth theo roadmap.
+- Commit reference: subject `feat(004): add owner authentication and revocable sessions`.

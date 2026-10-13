@@ -15,3 +15,62 @@ model SystemCheck {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 }
+
+enum UserRole {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+model User {
+  id           String      @id @default(uuid()) @db.Uuid
+  email        String      @unique
+  passwordHash String
+  role         UserRole    @default(VIEWER)
+  status       UserStatus  @default(ACTIVE)
+  mfaEnabled   Boolean     @default(false)
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime    @updatedAt @db.Timestamptz(3)
+  sessions     AuthSession[]
+  @@map("users")
+}
+
+model AuthSession {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  tokenHash         String    @unique @db.Char(64)
+  expiresAt         DateTime  @db.Timestamptz(3)
+  absoluteExpiresAt DateTime  @db.Timestamptz(3)
+  revokedAt         DateTime? @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @db.Timestamptz(3)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+model AuthThrottle {
+  key       String   @id @db.Char(64)
+  count     Int
+  resetAt   DateTime @db.Timestamptz(3)
+  @@index([resetAt])
+  @@map("auth_throttles")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @db.Uuid
+  action    String
+  targetId  String?  @db.Uuid
+  requestId String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([createdAt, id])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
