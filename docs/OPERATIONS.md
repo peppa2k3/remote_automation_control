@@ -1,6 +1,8 @@
 # Vận hành local
 
-Theo README, chạy `pnpm setup:local` để tạo env local (không ghi đè), rồi start native hoặc full stack. Health live đo tiến trình; ready đo kết nối database. CLI Agent chỉ diagnose; chưa có Windows Service/pairing.
+Theo README, chạy `pnpm setup:local` để tạo env local (không ghi đè), rồi start native hoặc full stack. Health live đo tiến trình; ready đo kết nối database. Agent diagnose kiểm tra health; pair/start thực hiện pairing và heartbeat.
+
+005 đã thêm pair/start/heartbeat/rotate và owner revoke UI. Windows Service install/reboot chưa thực hiện. Pair bằng cùng Windows identity sẽ chạy Agent; DPAPI CurrentUser yêu cầu profile. Không đổi sang LocalMachine hoặc đặt token trong env để khắc phục lỗi. [DEVICES](DEVICES.md) hướng dẫn recovery, credential TTL và `pnpm agent:smoke` trên Windows 11/DB test riêng. Gate Win11 hiện còn pending.
 
 Stack Docker dùng project `home-automation-local`; ports chỉ bind loopback. `down` giữ volumes; không dùng `down -v` với dữ liệu cần giữ. Không stop/remove các container không thuộc stack.
 

@@ -8,7 +8,7 @@ try {
     JSON.stringify({
       event: 'agent.diagnose',
       ...result,
-      message: 'Kết nối API thành công. Pairing/heartbeat chưa triển khai.',
+      message: 'Kết nối API thành công. Chạy pair để ghép đôi hoặc start để heartbeat.',
     }),
   );
 } catch {

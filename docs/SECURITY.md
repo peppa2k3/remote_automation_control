@@ -9,3 +9,5 @@ Dev Compose có project/volume riêng, port bind loopback. Không cấu hình Tr
 Downloader tương lai phải kiểm tra DNS + mỗi redirect, pin public IP để chống DNS rebinding, chặn metadata/private/link-local/reserved, byte quota và path traversal. Agent không execute nội dung tải về.
 
 Meta spike không được chạy publish nếu thiếu Page/quyền cụ thể. Publish thực dùng token mã hóa server-side, fingerprint durable, rate policy và reconciliation khi trạng thái chưa biết. Agent không nhận token Meta.
+
+005 cấp device credential riêng chỉ heartbeat/rotate, server hash-only; pair code random TTL 5 phút/dùng một lần, durable budgets; cookie admin không dùng cho Agent. DPAPI CurrentUser + DACL bảo vệ ciphertext, không plaintext fallback; helper mã cố định qua pipe, không nhận generic command. Rotate hai bước có local pending token trước server change và commit idempotent; revoke/rotation serialized SQL. HTTPS/TLS verification, không theo redirect, timeout/response limit và log không token/code. [DEVICES](DEVICES.md) ghi rõ limits và gate Win11 chưa đạt; native Windows 10 đã kiểm tra thật, không thay đổi firewall/service hoặc hạ tầng ngoài local.

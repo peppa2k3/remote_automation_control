@@ -12,9 +12,12 @@ import {
 } from './modules/auth/http.js';
 import { AuthError } from './modules/auth/types.js';
 import type { AuthService } from './modules/auth/service.js';
+import type { DeviceService } from './modules/devices/service.js';
+import { createAgentRouter, createDeviceRouter } from './modules/devices/http.js';
 
 export interface AppDependencies {
   auth?: AuthService;
+  devices?: DeviceService;
   secureCookies?: boolean;
   frontendOrigin: string;
   checkDatabase: () => Promise<void>;
@@ -102,6 +105,7 @@ export function createApp(deps: AppDependencies): Express {
           failure('AUTH_UNAVAILABLE', 'Dịch vụ đăng nhập chưa sẵn sàng.', res.locals.requestId),
         ),
     );
+  if (deps.devices) app.use('/api/v1/agent', createAgentRouter(deps.devices));
   app.use('/api/v1/agent', (_req, res) =>
     res
       .status(401)
@@ -123,6 +127,7 @@ export function createApp(deps: AppDependencies): Express {
     }
     next();
   });
+  if (deps.devices) app.use('/api/v1/devices', createDeviceRouter(deps.devices));
   app.use((_req, res) =>
     res.status(404).json(failure('NOT_FOUND', 'Endpoint chưa tồn tại.', res.locals.requestId)),
   );

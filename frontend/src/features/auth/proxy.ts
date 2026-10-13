@@ -22,6 +22,23 @@ export async function proxyAuth(
     });
   }
   if (methods[action] !== request.method) return error(404, 'NOT_FOUND', 'Endpoint không tồn tại.');
+  return proxySession(request, `auth/${action}`, baseUrl, frontendOrigin);
+}
+
+// Called only after each feature's fixed path/method allowlist has validated the route.
+export async function proxySession(
+  request: Request,
+  path: string,
+  baseUrl: string,
+  frontendOrigin: string,
+): Promise<Response> {
+  const requestId = crypto.randomUUID();
+  function error(status: number, code: string, message: string) {
+    return Response.json(failure(code, message, requestId), {
+      status,
+      headers: { 'Cache-Control': 'no-store', 'X-Request-Id': requestId },
+    });
+  }
   const origin = request.headers.get('Origin');
   if ((request.method !== 'GET' || origin) && origin !== frontendOrigin)
     return error(403, 'ORIGIN_REJECTED', 'Nguồn yêu cầu không được phép.');
@@ -29,7 +46,7 @@ export async function proxyAuth(
     return error(403, 'ORIGIN_REJECTED', 'Nguồn yêu cầu không được phép.');
   let upstream: URL;
   try {
-    upstream = new URL(`${baseUrl.replace(/\/$/, '')}/auth/${action}`);
+    upstream = new URL(`${baseUrl.replace(/\/$/, '')}/${path}`);
   } catch {
     return error(503, 'AUTH_UNAVAILABLE', 'Dịch vụ đăng nhập chưa sẵn sàng.');
   }

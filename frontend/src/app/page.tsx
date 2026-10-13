@@ -97,11 +97,13 @@ export default async function Home() {
           <p className="eyebrow">BƯỚC TIẾP THEO</p>
           <h2>Kết nối Windows Agent</h2>
           <p>
-            Đăng nhập quản trị đã sẵn sàng; ghép đôi thiết bị sẽ được triển khai ở prompt 005. Hiện
-            CLI Agent hỗ trợ kiểm tra kết nối với API.
+            Ghép đôi máy Windows và theo dõi heartbeat. Agent chỉ kết nối outbound; hàng đợi công
+            việc sẽ được triển khai ở bước tiếp theo.
           </p>
         </div>
-        <span className="planned">Đã lên kế hoạch</span>
+        <Link className="refresh" href="/devices">
+          Quản lý thiết bị
+        </Link>
       </section>
       <footer>
         <span>VPS điều phối. Windows thực thi.</span>

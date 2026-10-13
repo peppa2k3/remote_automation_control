@@ -5,6 +5,7 @@ import { parseConfig } from './config.js';
 import { createDatabase } from './database.js';
 import { createAuthStore } from './modules/auth/store.js';
 import { AuthService, defaultAuthSettings } from './modules/auth/service.js';
+import { DeviceService } from './modules/devices/service.js';
 
 const parsed = (() => {
   try {
@@ -17,6 +18,7 @@ const parsed = (() => {
 const logger = pino({ level: parsed.LOG_LEVEL });
 const db = parsed.DATABASE_URL ? createDatabase(parsed.DATABASE_URL) : undefined;
 const app = createApp({
+  devices: db ? new DeviceService(db) : undefined,
   auth: db
     ? new AuthService(createAuthStore(db), {
         ...defaultAuthSettings,

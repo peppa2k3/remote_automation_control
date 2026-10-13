@@ -32,7 +32,7 @@ Không bật mfaEnabled thủ công: login/session sẽ bị từ chối vì ch�
 
 ## Giới hạn và việc tiếp theo
 
-Chưa có reset/change password, màn hình danh sách session, user management, cleanup/retention định kỳ cho session/throttle/audit, MFA thực hoặc device pairing. Session list API giới hạn 100 kết quả, không trả hash/token; audit list OWNER lấy 100 bản ghi mới nhất. Counter hết cửa sổ sẽ được reset khi dùng lại, nhưng key cũ vẫn tồn tại; cleanup/retention thuộc vận hành tiếp theo. Cookie không có tiền tố __Host-; production cần HTTPS trên host đáng tin cậy và kiểm thử cấu hình proxy tại prompt deployment. Admin cookie luôn bị từ chối tại `/api/v1/agent/*`; device auth thuộc 005.
+Chưa có reset/change password, màn hình danh sách session, user management, cleanup/retention định kỳ cho session/throttle/audit hoặc MFA thực. Session list API giới hạn 100 kết quả, không trả hash/token; audit list OWNER lấy 100 bản ghi mới nhất. Counter hết cửa sổ sẽ được reset khi dùng lại, nhưng key cũ vẫn tồn tại; cleanup/retention thuộc vận hành tiếp theo. Cookie không có tiền tố __Host-; production cần HTTPS trên host đáng tin cậy và kiểm thử cấu hình proxy tại prompt deployment. Admin cookie luôn bị từ chối tại `/api/v1/agent/*`; [device auth 005](DEVICES.md) dùng credential riêng, gate Win11 còn pending.
 
 ## Nguồn và quyết định
 

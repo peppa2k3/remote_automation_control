@@ -37,6 +37,7 @@ model User {
   createdAt    DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime    @updatedAt @db.Timestamptz(3)
   sessions     AuthSession[]
+  pairingCodes PairingCode[]
   @@map("users")
 }
 
@@ -73,4 +74,49 @@ model AuditLog {
   @@index([createdAt, id])
   @@index([actorId, createdAt])
   @@map("audit_logs")
+}
+
+model PairingCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  codeHash  String    @unique @db.Char(64)
+  createdBy String    @db.Uuid
+  expiresAt DateTime  @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  owner     User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+  @@map("pairing_codes")
+}
+
+model Device {
+  id           String    @id @default(uuid()) @db.Uuid
+  label        String
+  platform     String
+  arch         String
+  version      String
+  capabilities String[]
+  lastSeenAt   DateTime? @db.Timestamptz(3)
+  revokedAt    DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+  credentials  DeviceCredential[]
+  @@index([lastSeenAt])
+  @@map("devices")
+}
+
+model DeviceCredential {
+  id               String    @id @default(uuid()) @db.Uuid
+  deviceId         String    @db.Uuid
+  tokenHash        String    @unique @db.Char(64)
+  scopes           String[]
+  expiresAt        DateTime  @db.Timestamptz(3)
+  activatedAt      DateTime? @db.Timestamptz(3)
+  pendingExpiresAt DateTime? @db.Timestamptz(3)
+  rotationParentId String?   @unique @db.Uuid
+  revokedAt        DateTime? @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  device           Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  @@index([deviceId, revokedAt])
+  @@index([expiresAt])
+  @@map("device_credentials")
 }

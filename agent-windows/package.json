@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "diagnose": "tsx src/cli.ts",
+    "pair": "tsx src/core/cli.ts pair",
+    "start": "node dist/core/cli.js run",
+    "rotate": "tsx src/core/cli.ts rotate",
+    "heartbeat": "tsx src/core/cli.ts heartbeat",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

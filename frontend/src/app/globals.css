@@ -369,3 +369,14 @@ footer {
     font-size: 12px;
   }
 }
+.pairing-code {
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+.pairing-code code {
+  display: block;
+  overflow-wrap: anywhere;
+  margin: 1rem 0;
+}

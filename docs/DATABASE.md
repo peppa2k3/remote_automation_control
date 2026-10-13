@@ -13,3 +13,7 @@ Integration auth yêu cầu DB test riêng chưa có owner, kiểm tra bootstrap
 `pnpm db:generate` không cần DB chạy; `pnpm db:migrate` chạy migration đã commit. Integration test chỉ chạy khi `RUN_DB_TESTS=1` và dùng URL DB local/CI. Không tự trỏ vào DB shared/production. Database test tạo record có label UUID riêng rồi xóa đúng record đó; kiểm tra unique label và ready 200 với DB thật, ready 503/live 200 khi kết nối DB không khả dụng.
 
 `pnpm setup:local` tạo env mới bằng ghi exclusive (không ghi đè), mật khẩu hex ngẫu nhiên phù hợp connection URL. Dev DB/volume `postgres-dev-data` khác DB full stack `postgres-data`.
+
+Migration `20261013000300_device_pairing` thêm pairing_codes (codeHash unique, owner FK, expiry/usedAt), devices (metadata/lastSeenAt/revokedAt), device_credentials (tokenHash unique, scopes/expiry/activation/pending, rotationParentId unique). Không lưu code/token rõ. Online state được suy ra lúc đọc, không là cột client có thể ghi. Pair lock theo code; heartbeat/rotate/revoke lock theo device, mutation/audit transaction. Device FK cascade xóa đúng credentials fixture; audit không tự cascade.
+
+Backend integration chạy tuần tự giữa files (`--no-file-parallelism`) vì OWNER unique toàn DB; test chỉ dùng owner/label/UUID của fixture. Chưa cleanup/retention định kỳ cho pairing/credential hết hạn. Win11 smoke cần DB test riêng không có user/device; không dùng DB runtime để test.

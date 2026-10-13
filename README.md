@@ -2,7 +2,7 @@
 
 Website/PWA điều phối Windows Agent tại nhà: nhận URL, tải và xử lý file, sau đó đăng lên Facebook Page qua API theo workflow đã cấu hình. VPS giữ trạng thái và quyền; Agent chủ động kết nối outbound.
 
-Repo đã triển khai prompt 001–004: đăng nhập quản trị, owner bootstrap, session PostgreSQL, RBAC/CSRF/audit, trang tình trạng kết nối và Agent CLI chẩn đoán. Pairing, durable queue, tải file, publish và MFA thực còn trong backlog; chưa production-ready.
+Repo đã hoàn thành prompt 001–004 và triển khai pairing/heartbeat của 005: owner UI quản lý thiết bị, credential scoped, DPAPI và rotate/revoke. Gate kiểm thử Win11 của 005 còn thiếu (máy hiện tại Windows 10), nên prompt giữ PARTIAL. Durable queue, tải file, publish và MFA thực còn trong backlog; chưa production-ready.
 
 ## Yêu cầu
 
@@ -44,7 +44,7 @@ pnpm dev
 pnpm --filter @automation/agent-windows diagnose
 ```
 
-CLI chỉ kiểm tra health; không tạo job, pairing hoặc publish. `AGENT_ALLOW_LOCAL_HTTP=true` chỉ cho localhost trong dev; production URL bắt buộc HTTPS.
+Lệnh diagnose chỉ kiểm tra health. Owner mở `/devices` để tạo mã 5 phút; trên Windows chạy `pnpm --filter @automation/agent-windows pair` và nhập mã ẩn, sau đó `pnpm --filter @automation/agent-windows start` để heartbeat. Credential lưu DPAPI CurrentUser, không đặt token trong env/argument. `rotate` và `heartbeat` là lệnh một lần; revoke qua UI owner. Không tạo job hoặc publish. `AGENT_ALLOW_LOCAL_HTTP=true` chỉ cho localhost trong dev; production URL bắt buộc HTTPS. Xem [DEVICES](docs/DEVICES.md) về storage, reconnect, TTL, recovery và test Win11.
 
 ## Chạy toàn bộ stack Docker local
 
@@ -105,7 +105,7 @@ docs/IMPLEMENTATION_LOG.md Nhật ký sau mỗi prompt
 ```
 
 - [Đặc tả](docs/PROJECT_CONTEXT.md), [kiến trúc](docs/ARCHITECTURE.md), [context rules](docs/CONTEXT_RULES.md).
-- [Quy tắc agent](AGENTS.md), [API](docs/API.md), [database](docs/DATABASE.md), [bảo mật](docs/SECURITY.md), [vận hành](docs/OPERATIONS.md).
+- [Quy tắc agent](AGENTS.md), [API](docs/API.md), [database](docs/DATABASE.md), [bảo mật](docs/SECURITY.md), [vận hành](docs/OPERATIONS.md), [Windows Agent](docs/DEVICES.md).
 - [Roadmap](docs/ROADMAP.md): ID 001–020 map T00–T17, gate và dependencies. Meta feasibility spike chạy sớm sau auth.
 
 Sau mỗi prompt: `promt` → `processing` → kiểm tra → `completed` → append nhật ký → commit riêng. Prompt chưa đạt gate phải ở `processing`; không tạo dữ liệu thành công giả trong dashboard.

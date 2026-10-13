@@ -31,8 +31,22 @@ Ready thành công thêm `database: "up"`; khi DB lỗi trả `data: null`, `err
 | POST /auth/logout | Session + Origin + JSON + X-CSRF-Token | 200 loggedOut=true, thu hồi session và clear cookie |
 | POST /auth/revoke-all | Session + Origin + JSON + X-CSRF-Token | 200 revoked=true, thu hồi mọi session của user và clear cookie |
 | GET /admin/audit-logs | OWNER | 200 tối đa 100 audit mới nhất; ADMIN/VIEWER 403 |
-| /agent/* | Device auth riêng chưa triển khai | 401 DEVICE_AUTH_REQUIRED dù có cookie admin |
+| /agent/* | Device auth riêng | Cookie admin không được thay bearer device; endpoint chưa triển khai 404 với credential hợp lệ |
 
 Login input không nhận role hoặc field dư. Mutation không có Origin/CSRF hợp lệ trả 403; không JSON trả 415. Auth DB chưa cấu hình trả 503 AUTH_UNAVAILABLE; DB query lỗi trả lỗi 500 an toàn. Cookie tên automation_session; Secure chỉ khi backend production. Response không cache. Frontend cung cấp proxy cùng origin `/api/v1/auth/{action}` cho sáu action auth, không proxy audit hoặc URL tùy ý. Không có HTTP bootstrap/signup/password-reset.
 
-Chi tiết chính sách và MFA tại [AUTH](AUTH.md). Devices/workflow/runs/provider/socket trong `PROJECT_CONTEXT.md` vẫn là thiết kế mục tiêu.
+Chi tiết chính sách và MFA tại [AUTH](AUTH.md). Workflow/runs/provider/socket trong `PROJECT_CONTEXT.md` vẫn là thiết kế mục tiêu.
+
+## Thiết bị trong 005
+
+| Method / path | Quyền / input | Kết quả |
+|---|---|---|
+| GET /devices | Session OWNER | Tối đa 100 device, lastSeen/onlineState/fingerprint 12 hex; không token/hash đầy đủ |
+| POST /devices/pairing-code | OWNER + CSRF/Origin + JSON {} | code một lần/expiry; 429 mint budget |
+| POST /devices/:deviceId/revoke | OWNER + CSRF/Origin + JSON {} | Thu hồi device và mọi credential, idempotent; UUID validation/404 |
+| POST /agent/pair | Không cookie; JSON code/label/platform/arch/version/capabilities | identity/scopes/token/credentialExpiresAt trả một lần; 401 mã sai/dùng/hết hạn, 429 IP budget |
+| POST /agent/heartbeat | Bearer agt_… scope agent:heartbeat; JSON metadata | deviceId/serverTime/heartbeatAfterSeconds; 401 revoked/expired/pending, 403 scope |
+| POST /agent/credentials/rotate | Bearer cũ scope agent:rotate; JSON {token: candidate} | Stage identity/expiry, không trả token; 409 conflict |
+| POST /agent/credentials/commit | Bearer candidate scope agent:rotate; JSON {} | Activate mới/revoke cũ atomically; retry idempotent |
+
+Native routes từ chối request có Origin; cookie user không cấp quyền. Metadata strict: platform win32, arch x64/arm64, semver ba phần, capabilities diagnostics/heartbeat không trùng. Không nhận scopes/onlineState/client timestamp/command tùy ý. Frontend `/api/v1/devices/...` chỉ proxy GET list và POST pairing-code/revoke-UUID; không proxy agent endpoints. [DEVICES](DEVICES.md) mô tả policy/DPAPI/rotation và gate Win11 còn pending.

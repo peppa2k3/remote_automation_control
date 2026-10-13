@@ -5,6 +5,8 @@ const schema = z
     AGENT_API_BASE_URL: z.url(),
     AGENT_ALLOW_LOCAL_HTTP: z.enum(['true', 'false']).default('false'),
     AGENT_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(100).max(30_000).default(5_000),
+    AGENT_STATE_DIR: z.string().min(1).optional(),
+    NODE_TLS_REJECT_UNAUTHORIZED: z.literal('1').optional(),
   })
   .superRefine((config, context) => {
     const url = new URL(config.AGENT_API_BASE_URL);

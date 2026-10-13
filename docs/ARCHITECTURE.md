@@ -46,7 +46,7 @@ Publisher ở VPS: lưu fingerprint và external state trước side effect; tim
 - Express `/api/v1/health/live`, `/health/ready`, envelope, request correlation, lỗi an toàn, CORS allowlist, Helmet và rate limit.
 - Prisma `SystemCheck` cho integration migration, User/AuthSession/AuthThrottle/AuditLog cho auth 004, PostgreSQL 17 local Compose, Dockerfile API/FE. Các bảng nghiệp vụ khác thuộc prompt tương ứng.
 - Auth dùng scrypt + session opaque hash ở PostgreSQL, CSRF/Origin, durable login throttle, owner CLI và quyền server-side; [AUTH](AUTH.md) và [ADR 001](ADR/001-admin-sessions.md). MFA mới có kế hoạch, device auth tách riêng.
-- Agent CLI kiểm tra kết nối outbound, timeout và xác thực response; chưa pairing/heartbeat/claim hoặc tự nhận job.
+- Agent có diagnose, pair/heartbeat/rotate và vòng lặp reconnect outbound; credential DPAPI CurrentUser, không listener/claim/job runner. Backend devices có pairing one-use, scoped identity, online/offline/revoke/rotation; owner UI tại /devices. [DEVICES](DEVICES.md), [ADR 002](ADR/002-device-identity.md); đã test native Windows 10, gate Windows 11 còn pending.
 - Socket.IO, FFmpeg, MinIO và Meta thuộc prompt riêng; chưa kết nối service/provider thật.
 
 ## Cấu hình và dữ liệu

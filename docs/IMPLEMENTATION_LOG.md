@@ -52,3 +52,15 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - Giới hạn: MFA mới có kế hoạch và fail closed khi flag bật; chưa reset/user management/retention job, trusted proxy IP policy production, Browser visual QA hoặc CI remote. Native Next CLI smoke có warning standalone; Docker standalone được kiểm tra riêng. Pairing/queue/provider thuộc prompt sau.
 - Kết quả: DONE tại `docs/completed/004-admin-auth.md`. Stack chạy ở `http://localhost:3000/login`; người dùng tạo owner cá nhân qua CLI theo README. Tiếp theo 005, có thể thực hiện 011 sớm sau auth theo roadmap.
 - Commit reference: subject `feat(004): add owner authentication and revocable sessions`.
+
+## 2026-10-13 — 005 — Pairing/heartbeat triển khai, gate Win11 còn thiếu
+
+- Dependency 004 đã commit tại `8aced6c`. Kết quả **PARTIAL**, giữ `docs/processing/005-agent-pairing.md`: máy kiểm thử Windows 10 Pro build 19045, chưa có bằng chứng Windows 11 theo acceptance.
+- Thêm pairing/device/credential migration, API OWNER quản lý thiết bị, code random one-use/TTL/budgets durable, bearer device scoped/hash-only, online/offline lastSeen server, revoke và rotation stage/commit có audit/SQL locks.
+- Agent native pair/start/heartbeat/rotate, TLS/timeout/response limits, reconnect/backoff; DPAPI CurrentUser + DACL, atomic ciphertext và OS process lock. Pending token được lưu trước network để phục hồi lost rotation response, không plaintext token/env hoặc generic command/inbound.
+- Frontend owner /devices + proxy allowlist/CSRF/Origin, hiển thị mã một lần và polling trạng thái/revoke; cập nhật README/docs/env, DEVICES, ADR 002, script Win11 smoke và Windows CI job (chưa CI remote).
+- PASS: lint/typecheck/build, 33 unit tests (bao gồm DPAPI thật), 10 integration PostgreSQL (consume/commit/revoke races, scope/CSRF/identity, expired pending/restage, durable limits), native/DB/Docker migrations và Docker images.
+- Native Windows 10 + frontend proxy + PostgreSQL thực PASS: pair/DPAPI, reload credential qua process restart, rotate, API outage/restart/reconnect, revoke làm Agent dừng, không code/token/password trong log. Fixture nằm trong DB test riêng, ciphertext ở .verification; dọn đúng dữ liệu và giữ .env/volume/container ngoài project.
+- Docker stack healthy, migrate exit 0 trước API; stack checker và auth regression/ADMIN device denial/devices page PASS. Auth smoke không DB/có DB + diagnose Agent PASS; Next native CLI có warning standalone, Docker dùng standalone riêng.
+- Giới hạn: gate Win11 chưa chạy; chưa Browser visual QA/remote CI, Windows Service/reboot/multi-user DPAPI hoặc provider E2E, job claim/result, retention/cleanup. Không deploy VPS/public publish. DEVICES.md có hướng dẫn `pnpm agent:smoke` trên Win11 với DB test trống để chốt gate; không chuyển completed hoặc bắt đầu dependency 006 khi chưa đạt gate.
+- Commit reference: subject `feat(005): implement scoped device pairing and DPAPI heartbeat`. Khi Win11 PASS, append kết quả xác minh mới rồi chuyển prompt completed; giữ lịch sử PARTIAL này.
