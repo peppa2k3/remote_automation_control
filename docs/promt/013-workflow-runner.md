@@ -18,7 +18,7 @@ baseline_task: T11
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: workflow JSON schema-versioned (DAG các step allowlisted) và URL items. Output: run/step/jobs/checkpoints tiến tới kết quả publish hoặc NEEDS_ATTENTION; không eval expression/shell.
 
 ## Business rules / Security
 

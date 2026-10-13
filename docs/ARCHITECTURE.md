@@ -72,5 +72,6 @@ Thông số VPS/domain/MinIO/Page vẫn cần chủ dự án cung cấp khi làm
 - [Next.js installation](https://nextjs.org/docs/app/getting-started/installation) và [Next.js 16 upgrade](https://nextjs.org/docs/app/guides/upgrading/version-16): App Router và ESLint CLI riêng.
 - [Prisma generators](https://www.prisma.io/docs/orm/v7/prisma-schema/overview/generators), [Prisma configuration](https://docs.prisma.io/docs/orm/reference/prisma-config-reference): generated client có output riêng, kết nối qua PostgreSQL adapter.
 - [pnpm 11 release](https://pnpm.io/blog/releases/11.0): build-script allowlist dùng `allowBuilds`, settings nằm trong `pnpm-workspace.yaml`.
+- [Prisma Docker guide](https://docs.prisma.io/docs/guides/deployment/docker): Debian slim cần OpenSSL cho migration engine.
 
 Phiên bản package được pin trong manifests và lockfile; không tự chọn pre-release từ registry.

@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/src/generated
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+**/*.tsbuildinfo
+.verification
+automation-data
+credentials
+browser-profiles

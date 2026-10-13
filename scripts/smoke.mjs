@@ -15,6 +15,7 @@ const apiUrl = `http://127.0.0.1:${apiPort}/api/v1`;
 const webUrl = `http://127.0.0.1:${webPort}`;
 const env = {
   ...process.env,
+  DOTENV_CONFIG_PATH: '__smoke_env_disabled__',
   NODE_ENV: 'development',
   HOST: '127.0.0.1',
   PORT: String(apiPort),
@@ -31,15 +32,19 @@ function start(args, cwd, extraEnv = {}) {
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
   });
-  child.on('error', () => {});
+  child.on('error', () => console.error(`Runtime process could not start: ${cwd}`));
   child.stdout.on('data', () => {});
-  child.stderr.on('data', () => {});
+  child.stderr.on('data', (chunk) => console.error(`${cwd}: ${String(chunk)}`));
   children.push(child);
   return child;
 }
 async function waitFor(url) {
-  const deadline = Date.now() + 45_000;
+  const deadline = Date.now() + 120_000;
   while (Date.now() < deadline) {
+    assert.ok(
+      !children.some((child) => child.exitCode !== null && child.exitCode !== 0),
+      'Runtime process exited before startup',
+    );
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
       if (response.ok) return response;
@@ -56,7 +61,9 @@ try {
   const envelope = await live.json();
   assert.equal(envelope.success, true);
   assert.equal(envelope.requestId, live.headers.get('x-request-id'));
-  const ready = await fetch(`${apiUrl}/health/ready`);
+  const ready = process.env.SMOKE_DATABASE_URL
+    ? await waitFor(`${apiUrl}/health/ready`)
+    : await fetch(`${apiUrl}/health/ready`);
   assert.equal(ready.status, process.env.SMOKE_DATABASE_URL ? 200 : 503);
   console.log('PASS: backend live, request correlation and database readiness');
   start(

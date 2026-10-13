@@ -18,7 +18,7 @@ baseline_task: T10
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: publish job với artifact ID, destination ID explicit và policy preauthorized. Output: publication durable có fingerprint/external ID/link hoặc UNKNOWN_EXTERNAL_STATUS; trạng thái ngoài được reconcile trước retry.
 
 ## Business rules / Security
 

@@ -18,7 +18,7 @@ baseline_task: T06
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: direct HTTPS URL trên allowlist và giới hạn từ workflow đã validate. Output: stream vào per-run workspace, local relative path, bytes/MIME/checksum và checkpoint resume; không thực thi file.
 
 ## Business rules / Security
 

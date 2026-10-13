@@ -18,7 +18,7 @@ baseline_task: T04
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: jobs đã lưu DB; device gọi claim/ack/renew-lease/progress/complete/fail với lease proof. Output: job thuộc một lease holder, checkpoint/events và trạng thái run; stale/foreign lease bị từ chối.
 
 ## Business rules / Security
 

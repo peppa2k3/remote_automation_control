@@ -18,7 +18,7 @@ baseline_task: T08
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: Agent yêu cầu `/agent/artifacts/presign-upload` với run/job/file metadata có lease hợp lệ. Output: presigned URL ngắn hạn, artifact metadata/checksum trong DB; retention chỉ tác động prefix riêng.
 
 ## Business rules / Security
 

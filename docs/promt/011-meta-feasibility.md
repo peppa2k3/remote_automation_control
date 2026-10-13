@@ -18,7 +18,7 @@ baseline_task: T09
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: cấu hình Meta App/Page do chủ dự án cấp, quyền API đã xác minh và ủy quyền đăng bài thử. Output: báo cáo feasibility, version/permissions redacted và Post ID/link thật; nếu thiếu điều kiện ghi BLOCKED.
 
 ## Business rules / Security
 

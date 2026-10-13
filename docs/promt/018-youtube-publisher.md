@@ -18,7 +18,7 @@ baseline_task: T16
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: channel OAuth2 được cấp quyền, artifact/video metadata và policy allowlisted. Output: resumable upload state, external video ID/link, reconciliation và quota/error state.
 
 ## Business rules / Security
 

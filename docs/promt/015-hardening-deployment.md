@@ -18,7 +18,7 @@ baseline_task: T13
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: bản build release, cấu hình VPS thực đã xác minh, backup target riêng và nội dung thử có quyền. Output: báo cáo real E2E/recovery/restore, image CI và deployment runbook; deploy phải có quyền cụ thể.
 
 ## Business rules / Security
 

@@ -8,6 +8,8 @@
     "pnpm": ">=11 <12"
   },
   "scripts": {
+    "setup:local": "node scripts/setup-local.mjs",
+    "stack:check": "node scripts/check-stack.mjs",
     "dev": "concurrently -k -n api,web \"pnpm --filter @automation/backend dev\" \"pnpm --filter @automation/frontend dev\"",
     "lint": "eslint . && prettier --check . && pnpm docs:check",
     "format": "prettier --write .",

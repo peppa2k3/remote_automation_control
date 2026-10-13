@@ -6,6 +6,19 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: automation
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: automation
+        ports: [5432:5432]
+        options: >-
+          --health-cmd="pg_isready -h 127.0.0.1 -U automation -d automation"
+          --health-interval=5s --health-timeout=3s --health-retries=15
+    env:
+      DATABASE_URL: postgresql://automation:ci-only-password@localhost:5432/automation
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -19,3 +32,10 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm smoke
+      - run: pnpm db:migrate
+      - run: pnpm --filter @automation/backend test:integration
+        env:
+          RUN_DB_TESTS: '1'
+      - run: pnpm smoke
+        env:
+          SMOKE_DATABASE_URL: ${{ env.DATABASE_URL }}

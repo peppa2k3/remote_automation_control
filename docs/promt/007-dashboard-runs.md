@@ -18,7 +18,7 @@ baseline_task: T05
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: UI dán nhiều URL và chọn workflow ID; `POST /workflow-definitions/:id/runs` với items/sourceUrl và requestIdempotencyKey. Output: 202 run ID, run detail/history, trạng thái Agent và job progress đọc từ API.
 
 ## Business rules / Security
 

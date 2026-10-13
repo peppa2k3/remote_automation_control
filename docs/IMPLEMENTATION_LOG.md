@@ -24,3 +24,18 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - Giới hạn: Browser không có kết nối, chưa visual QA; CI chưa chạy remote. PostgreSQL migration/full Docker stack thuộc 003; auth và nghiệp vụ thuộc 004 trở đi.
 - Security review: không secret, không external publish/deploy, không inbound Agent hoặc generic shell.
 - Commit reference: subject `feat(002): bootstrap typed control platform and diagnostics`.
+
+## 2026-10-13 — 003 — PostgreSQL, migration và stack local
+
+- Prompt 002 đã commit tại `764dea3`. Tiếp tục hoàn thiện phần chưa kiểm chứng của 003; Docker image build từ phiên trước đã thành công, khôi phục Linux engine local sau khi Docker Desktop dừng.
+- Thêm migration SystemCheck và integration tests PostgreSQL thật. Compose có profile stack/native với volume riêng, DB nội bộ, API/frontend loopback, non-root Node runtime, healthcheck/memory limits và migration gate.
+- Migration dùng chung image backend; frontend chạy Next.js standalone. Điều chỉnh PostgreSQL TCP healthcheck, grace 120 giây + 30 retries sau khi thấy volume mới init chậm trên Windows.
+- Thêm setup env local an toàn (random password, exclusive write), stack checker và runtime smoke; cập nhật CI, README, database/operations/architecture docs và mô tả input/output của backlog đã soạn trong đợt khởi tạo.
+- Giữ các thư mục lifecycle/ADR rỗng trong Git bằng `.gitkeep`, để clone mới có `docs/processing` và chạy được docs checker.
+- PASS: lint, typecheck, 13 unit tests, build Windows và Docker images, migration (kể cả chạy lại idempotent), 3 DB integration tests, FE/API/DB/Agent native smoke, Agent kết nối API Docker, stack health + HTML + manifest/icon + JS/CSS. Actionlint đã pass local.
+- Outage/recovery thật PASS: stop đúng PostgreSQL của stack → ready 503/live 200/frontend DB unavailable → start lại → ready 200; SystemCheck có UUID riêng tồn tại qua restart và được xóa sau kiểm tra. Volume không bị reset/xóa.
+- Kiểm tra runtime: migrate exit 0 trước backend start; backend/frontend user node; full-stack DB không expose host; ports 3000/4000 và native-dev DB 5432 chỉ loopback. Không thay cấu hình/xóa container của project khác.
+- Env và verification artifacts được ignore; setup chạy lại không sửa env hiện hữu. Không commit secret, không deploy VPS hoặc gọi provider publish.
+- Giới hạn: chưa CI remote hoặc Browser visual QA; auth/pairing/queue/provider thuộc prompt sau. Native Next CLI smoke có cảnh báo standalone nhưng Docker standalone frontend đã được kiểm tra riêng.
+- Kết quả: DONE, chuyển prompt sang `docs/completed/003-database-local-stack.md`. Stack còn chạy để review tại `http://localhost:3000`.
+- Commit reference: subject `feat(003): verify PostgreSQL migration and local Docker stack`.

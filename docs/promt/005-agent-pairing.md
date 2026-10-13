@@ -18,7 +18,7 @@ baseline_task: T03
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: admin tạo pairing code; Agent gửi code + device label/platform/capabilities tới `/agent/pair`, sau đó heartbeat. Output: identity thiết bị, credential scoped và lastSeen/online state; pairing code không tái sử dụng.
 
 ## Business rules / Security
 

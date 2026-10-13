@@ -18,7 +18,7 @@ baseline_task: NONE
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: acceptance checklist MVP, commit/test evidence và vận hành/recovery docs. Output: release readiness report và bàn giao có known issues; đánh dấu gate thiếu rõ ràng.
 
 ## Business rules / Security
 

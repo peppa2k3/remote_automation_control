@@ -18,7 +18,7 @@ baseline_task: T07
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: file trong per-run workspace, media preset allowlisted và timeout/resources. Output: metadata ffprobe, media đã validate/convert và checksum; invalid/timeout/disk full trả lỗi rõ.
 
 ## Business rules / Security
 

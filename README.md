@@ -16,13 +16,19 @@ PowerShell từ root:
 
 ```powershell
 pnpm install --frozen-lockfile
+pnpm setup:local
+```
+
+`setup:local` tạo mật khẩu PostgreSQL random và các env local; không ghi đè file đã có, không in secret. Env này chỉ dành cho local. Nếu cấu hình thủ công, dùng mật khẩu hex ngẫu nhiên (Compose ghép vào connection URL) và có thể copy các mẫu:
+
+```powershell
 Copy-Item backend/.env.example backend/.env
 Copy-Item frontend/.env.example frontend/.env.local
 Copy-Item agent-windows/.env.example agent-windows/.env
 Copy-Item infrastructure/compose/.env.example infrastructure/compose/.env
 ```
 
-Điền `POSTGRES_PASSWORD` vào compose `.env` và cập nhật mật khẩu tương ứng trong `backend/.env` (URL-encode ký tự đặc biệt của URL). Không commit `.env`.
+Khi copy thủ công, điền `POSTGRES_PASSWORD` hex vào compose `.env` và cập nhật mật khẩu tương ứng trong `backend/.env`. Không commit `.env`. Bỏ qua bước copy nếu đã chạy `setup:local`.
 
 ```powershell
 docker compose -f infrastructure/compose/compose.yml --profile native up -d postgres-dev
@@ -48,6 +54,8 @@ docker compose -f infrastructure/compose/compose.yml --profile stack up --build 
 ```
 
 Frontend ở `http://localhost:3000`, API ở `http://localhost:4000/api/v1`; migration service chạy xong trước API. DB full stack không expose host. Đừng chạy đồng thời full stack và native FE/API trên cùng port. `postgres-dev` là DB/volume khác với DB của full stack.
+
+Chạy `pnpm stack:check` để kiểm tra health/DB, HTML trạng thái, manifest/icon và build assets trên stack đang chạy. Nếu đổi port, đặt `CHECK_API_BASE_URL` / `CHECK_SITE_URL`. `pnpm --filter @automation/agent-windows diagnose` kiểm tra Agent native kết nối stack này.
 
 ```powershell
 docker compose -f infrastructure/compose/compose.yml --profile stack down

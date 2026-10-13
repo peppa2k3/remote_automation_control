@@ -18,7 +18,7 @@ baseline_task: T02
 
 ## Input / Output
 
-Input: cấu hình/env và dữ liệu hợp lệ của module; đọc baseline để xác định payload cụ thể. Output: hành vi trong checklist dưới đây, test có bằng chứng và tài liệu đồng bộ.
+Input: email/password tại `POST /api/v1/auth/login`; cookie session tại me/logout/refresh. Output: identity/role, HTTP-only session và audit; CLI bootstrap owner không nhận password trong argument/log.
 
 ## Business rules / Security
 
