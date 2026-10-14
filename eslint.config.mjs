@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/next-env.d.ts',
       '**/coverage/**',
       '.verification/**',
+      'remote-control-agent-core-base/**',
     ],
   },
   js.configs.recommended,

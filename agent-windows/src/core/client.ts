@@ -4,6 +4,7 @@ import {
   deviceIdentityResponseSchema,
   heartbeatResponseSchema,
   type AgentMetadata,
+  type HeartbeatInput,
   type DeviceIdentity,
 } from '@automation/contracts';
 import type { AgentConfig } from '../config.js';
@@ -19,7 +20,7 @@ export interface DeviceClient {
   ): Promise<DeviceIdentity & { token: string }>;
   heartbeat(
     token: string,
-    metadata: AgentMetadata,
+    metadata: HeartbeatInput,
   ): Promise<{ deviceId: string; serverTime: string; heartbeatAfterSeconds: number }>;
   stage(token: string, nextToken: string): Promise<DeviceIdentity>;
   commit(token: string): Promise<DeviceIdentity>;
@@ -75,7 +76,7 @@ export class HttpDeviceClient implements DeviceClient {
     if (!body.success) throw new Error('INVALID_RESPONSE');
     return body.data;
   }
-  async heartbeat(token: string, metadata: AgentMetadata) {
+  async heartbeat(token: string, metadata: HeartbeatInput) {
     const body = await this.post('heartbeat', metadata, heartbeatResponseSchema, token);
     if (!body.success) throw new Error('INVALID_RESPONSE');
     return body.data;

@@ -56,7 +56,22 @@ export type HealthData = z.infer<typeof healthDataSchema>;
 
 export const DEVICE_SCOPES = ['agent:heartbeat', 'agent:rotate'] as const;
 export const deviceTokenSchema = z.string().regex(/^agt_[a-f0-9]{64}$/);
-export const pairingCodeSchema = z.string().regex(/^pair_[a-f0-9]{32}$/);
+// Accept legacy unexpired 128-bit codes during rollout; new codes use 256 bits.
+export const pairingCodeSchema = z.string().regex(/^pair_(?:[a-f0-9]{32}|[a-f0-9]{64})$/);
+export const HEARTBEAT_SECONDS = 5;
+export const DEVICE_OFFLINE_MS = 25_000;
+export const deviceRoleSchema = z.enum(['OWNER', 'OPERATOR', 'VIEWER']);
+export const runtimeSchema = z
+  .object({
+    hostname: z.string().trim().min(1).max(255),
+    uptimeSeconds: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    agentUptimeSeconds: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    memoryTotalBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    memoryFreeBytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    cpuCount: z.number().int().min(1).max(65536),
+  })
+  .strict()
+  .refine((v) => v.memoryFreeBytes <= v.memoryTotalBytes);
 export const agentMetadataSchema = z
   .object({
     platform: z.literal('win32'),
@@ -83,6 +98,38 @@ export const pairInputSchema = agentMetadataSchema
   })
   .strict();
 export const rotateInputSchema = z.object({ token: deviceTokenSchema }).strict();
+export const heartbeatInputSchema = agentMetadataSchema
+  .extend({ runtime: runtimeSchema.optional() })
+  .strict();
+export type HeartbeatInput = z.infer<typeof heartbeatInputSchema>;
+export const memberInputSchema = z
+  .object({
+    email: z
+      .email()
+      .max(254)
+      .transform((v) => v.trim().toLowerCase()),
+    role: z.enum(['OPERATOR', 'VIEWER']),
+  })
+  .strict();
+export const removeMemberInputSchema = z.object({ userId: z.uuid() }).strict();
+export const membersResponseSchema = apiResponseSchema(
+  z.array(
+    z.object({
+      userId: z.uuid(),
+      email: z.email(),
+      role: z.enum(['OPERATOR', 'VIEWER']),
+    }),
+  ),
+);
+export const activityResponseSchema = apiResponseSchema(
+  z.array(
+    z.object({
+      id: z.uuid(),
+      action: z.string(),
+      createdAt: z.iso.datetime(),
+    }),
+  ),
+);
 export const emptyInputSchema = z.object({}).strict();
 export const deviceIdentitySchema = z.object({
   deviceId: z.uuid(),
@@ -97,7 +144,7 @@ export const heartbeatResponseSchema = apiResponseSchema(
   z.object({
     deviceId: z.uuid(),
     serverTime: z.iso.datetime(),
-    heartbeatAfterSeconds: z.number().int().min(10).max(300),
+    heartbeatAfterSeconds: z.number().int().min(5).max(300),
   }),
 );
 export const pairingResponseSchema = apiResponseSchema(
@@ -113,6 +160,9 @@ export const deviceSchema = agentMetadataSchema.extend({
     .string()
     .regex(/^[a-f0-9]{12}$/)
     .nullable(),
+  role: deviceRoleSchema,
+  runtime: runtimeSchema.nullable().default(null),
+  meshStatus: z.literal('NOT_INTEGRATED').default('NOT_INTEGRATED'),
 });
 export const devicesResponseSchema = apiResponseSchema(z.array(deviceSchema));
 export type AgentMetadata = z.infer<typeof agentMetadataSchema>;

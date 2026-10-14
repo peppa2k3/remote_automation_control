@@ -1,5 +1,15 @@
 # Home Automation Control Platform
 
+## Core quản lý thiết bị — bắt đầu tại đây
+
+Kết nối máy Windows tại nhà tới server/VPS và đăng nhập web để xem online/offline, uptime, RAM, lịch sử; chia sẻ quyền xem theo từng thiết bị. Bắt đầu bằng [hướng dẫn từng bước cho người mới](docs/guides/start-here.md), sau đó [thiết lập VPS HTTPS](docs/guides/vps-setup.md).
+
+Logic phù hợp từ `remote-control-agent-core-base` đã được chuyển vào các workspace hiện tại: quyền owner/member, pairing 256-bit có xác nhận tại local, heartbeat/poll 5 giây và trạng thái unknown khi mất server. Giữ Next.js, PostgreSQL, auth/session, DPAPI và credential rotation đã có. Xem [bản đồ chuyển đổi và lộ trình](docs/CORE_ROADMAP.md). Thư mục starter là tham chiếu, không chạy `npm install` hoặc build app thứ hai trong đó.
+
+Core hiện chỉ giám sát: lease/ACK, desktop/MeshCentral và chạy script nằm ở các prompt tiếp theo. Chưa nghiệm thu kết nối trên VPS/domain thật và gate Windows 11 của 005 còn pending. Phần automation tải file/publish ở mô tả baseline bên dưới thuộc giai đoạn nâng cao.
+
+Hướng dẫn từng bước về cài đặt, cấu hình FE/BE/DB/Agent, luồng kết nối và xử lý lỗi: [docs/guides](docs/guides/README.md).
+
 Website/PWA điều phối Windows Agent tại nhà: nhận URL, tải và xử lý file, sau đó đăng lên Facebook Page qua API theo workflow đã cấu hình. VPS giữ trạng thái và quyền; Agent chủ động kết nối outbound.
 
 Repo đã hoàn thành prompt 001–004 và triển khai pairing/heartbeat của 005: owner UI quản lý thiết bị, credential scoped, DPAPI và rotate/revoke. Gate kiểm thử Win11 của 005 còn thiếu (máy hiện tại Windows 10), nên prompt giữ PARTIAL. Durable queue, tải file, publish và MFA thực còn trong backlog; chưa production-ready.
@@ -34,6 +44,7 @@ Khi copy thủ công, điền `POSTGRES_PASSWORD` hex vào compose `.env` và c�
 docker compose -f infrastructure/compose/compose.yml --profile native up -d postgres-dev
 pnpm db:generate
 pnpm db:migrate
+pnpm build
 pnpm owner:bootstrap
 pnpm dev
 ```

@@ -146,8 +146,8 @@ describe.skipIf(!enabled)('PostgreSQL device lifecycle and authorization', () =>
     });
     expect(stored.tokenHash).toBe(deviceHash(paired.token));
     expect(stored.scopes).toEqual(['agent:heartbeat', 'agent:rotate']);
-    expect(JSON.stringify(await service.list())).not.toContain(paired.token);
-    expect((await service.list()).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
+    expect(JSON.stringify(await service.list(userId))).not.toContain(paired.token);
+    expect((await service.list(userId)).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
       'OFFLINE',
     );
     const beat = () =>
@@ -156,15 +156,15 @@ describe.skipIf(!enabled)('PostgreSQL device lifecycle and authorization', () =>
         .set('Authorization', `Bearer ${paired.token}`)
         .send(metadata);
     expect((await beat()).status).toBe(200);
-    expect((await service.list()).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
+    expect((await service.list(userId)).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
       'ONLINE',
     );
-    now = new Date(now.getTime() + 91000);
-    expect((await service.list()).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
+    now = new Date(now.getTime() + 25001);
+    expect((await service.list(userId)).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
       'OFFLINE',
     );
     expect((await beat()).status).toBe(200);
-    expect((await service.list()).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
+    expect((await service.list(userId)).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
       'ONLINE',
     );
     for (const secret of [paired.token, code.body.data.code, password])
@@ -189,13 +189,11 @@ describe.skipIf(!enabled)('PostgreSQL device lifecycle and authorization', () =>
       'device-test-owner-ip',
       id,
     );
-    expect(
-      (
-        await request(app)
-          .get('/api/v1/devices')
-          .set('Cookie', `automation_session=${viewer.token}`)
-      ).status,
-    ).toBe(403);
+    const visible = await request(app)
+      .get('/api/v1/devices')
+      .set('Cookie', `automation_session=${viewer.token}`);
+    expect(visible.status).toBe(200);
+    expect(visible.body.data).toEqual([]);
     expect(
       (
         await request(app)
@@ -301,7 +299,7 @@ describe.skipIf(!enabled)('PostgreSQL device lifecycle and authorization', () =>
       await db.deviceCredential.count({ where: { deviceId: paired.deviceId, revokedAt: null } }),
     ).toBe(0);
     expect((await beat(candidate)).status).toBe(401);
-    expect((await service.list()).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
+    expect((await service.list(userId)).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
       'REVOKED',
     );
   });
@@ -312,7 +310,7 @@ describe.skipIf(!enabled)('PostgreSQL device lifecycle and authorization', () =>
     await expect(service.authenticate(paired.token, 'agent:heartbeat')).rejects.toMatchObject({
       status: 401,
     });
-    expect((await service.list()).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
+    expect((await service.list(userId)).find((d) => d.id === paired.deviceId)?.onlineState).toBe(
       'OFFLINE',
     );
     const attemptIp = `${prefix}-budget-ip`;

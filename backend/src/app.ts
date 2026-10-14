@@ -123,11 +123,14 @@ export function createApp(deps: AppDependencies): Express {
   app.use('/api/v1', (req, res, next) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
       assertMutation(req, res.locals.auth, deps.frontendOrigin);
-      return requireOwner()(req, res, next);
     }
     next();
   });
   if (deps.devices) app.use('/api/v1/devices', createDeviceRouter(deps.devices));
+  app.use('/api/v1', (req, res, next) => {
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return requireOwner()(req, res, next);
+    next();
+  });
   app.use((_req, res) =>
     res.status(404).json(failure('NOT_FOUND', 'Endpoint chưa tồn tại.', res.locals.requestId)),
   );

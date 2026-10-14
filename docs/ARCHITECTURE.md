@@ -1,5 +1,11 @@
 # Kiến trúc Home Automation Control Platform
 
+## Ưu tiên core từ 14/10/2026
+
+Theo [ADR 003](ADR/003-core-device-manager.md), mục tiêu trước mắt là Local Windows → server/VPS → web manager. Giữ Next.js/Express/PostgreSQL/DPAPI; tiếp nhận ownership, members và sự phân biệt unknown/offline từ starter. Mỗi máy một owner; member viewer/operator hiện chỉ được xem. Heartbeat REST 5s, offline 25s; FE lấy snapshot REST mỗi 5s, xóa snapshot khi mất server. Backend restart cần heartbeat mới. Runtime aggregate (uptime/RAM/CPU count) và activity được lưu DB, chỉ trả cho owner/member. Không có Socket.IO/lease/executor/MeshCentral ở bước này.
+
+Mẫu VPS một domain: proxy `/api/v1/agent/*` và `/api/v1/health/*` tới BE, các route còn lại tới Next. Native local vẫn hai port. Hướng dẫn [start-here](guides/start-here.md), [VPS](guides/vps-setup.md), lộ trình [CORE_ROADMAP](CORE_ROADMAP.md). Các phần workflow/publish bên dưới là thiết kế dài hạn từ baseline cũ.
+
 ## Phân tích bài toán
 
 Sản phẩm giảm thao tác thường ngày xuống dán URL và gửi. VPS giữ cấu hình, quyền, jobs và kết quả; máy Windows tại nhà chịu download/media. Điểm khó nhất là phục hồi khi Agent offline, tránh publish trùng và xác minh quyền Meta sớm. Với một chủ sở hữu và một Agent, modular monolith + PostgreSQL đáp ứng MVP mà không cần thêm message broker.

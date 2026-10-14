@@ -188,7 +188,7 @@ try {
     redirect: 'manual',
   });
   assert.equal(devicesPage.status, 200);
-  assert.ok((await devicesPage.text()).includes('Tạo mã ghép đôi'), 'Owner devices UI unavailable');
+  assert.ok((await devicesPage.text()).includes('Kết nối máy mới'), 'Owner devices UI unavailable');
   const listing = await fetch(`${origin}/api/v1/devices`, { headers: { Cookie: cookie } });
   assert.equal(listing.status, 200);
   phase = 'frontend-pairing-code';
@@ -222,6 +222,20 @@ try {
   phase = 'native-cli';
   await cli('heartbeat');
   await cli('heartbeat'); // Separate processes reload DPAPI after restart.
+  phase = 'runtime-snapshot-through-frontend';
+  const runtimeResponse = await fetch(`${origin}/api/v1/devices`, { headers: { Cookie: cookie } });
+  assert.equal(runtimeResponse.status, 200);
+  const monitored = (await runtimeResponse.json()).data.find((device) => device.id === deviceId);
+  assert.equal(monitored.onlineState, 'ONLINE');
+  assert.equal(monitored.role, 'OWNER');
+  assert.ok(monitored.runtime.hostname.length > 0);
+  assert.ok(monitored.runtime.cpuCount > 0);
+  assert.ok(monitored.runtime.memoryTotalBytes >= monitored.runtime.memoryFreeBytes);
+  const activityResponse = await fetch(`${origin}/api/v1/devices/${deviceId}/activity`, {
+    headers: { Cookie: cookie },
+  });
+  assert.equal(activityResponse.status, 200);
+  assert.ok((await activityResponse.json()).data.some((event) => event.action === 'device.online'));
   await cli('rotate');
   await cli('heartbeat');
   await assert.rejects(client.heartbeat(paired.token, metadata));

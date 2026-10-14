@@ -1,14 +1,16 @@
 # Windows Agent pairing và heartbeat
 
+Core 021 bổ sung owner/member theo từng máy, uptime/RAM/CPU count và activity tại `/devices`. Bắt đầu với [bài thực hành từng bước](guides/start-here.md). User đăng nhập được tạo mã pair cho máy của mình; chỉ chủ device được chia sẻ/revoke. `pnpm user:create` tạo tài khoản trên server. Operator/viewer hiện chỉ xem; lease điều khiển là bước sau. [Lộ trình](CORE_ROADMAP.md).
+
 ## Cách dùng
 
-Owner đăng nhập, mở `/devices`, chọn **Tạo mã ghép đôi**. Mã `pair_…` dùng đúng một lần và hết hạn sau 5 phút. Mã chỉ hiển thị trong response và bộ nhớ UI; không đưa vào argument/env/log. Owner có thể ẩn mã; ẩn giao diện không thu hồi mã còn hiệu lực. Tối đa 5 mã/owner/15 phút và 10 lần pair/IP/15 phút, counter lưu PostgreSQL.
+User đăng nhập, mở `/devices`, chọn **Kết nối máy mới**. Mã mới chứa 256 bit ngẫu nhiên; người tạo mã trở thành owner thiết bị. Mã `pair_…` dùng đúng một lần và hết hạn sau 5 phút. Mã chỉ hiển thị trong response và bộ nhớ UI; không đưa vào argument/env/log. Owner có thể ẩn mã; ẩn giao diện không thu hồi mã còn hiệu lực. Tối đa 5 mã/owner/15 phút và 10 lần pair/IP/15 phút, counter lưu PostgreSQL.
 
 Trên máy Windows, cấu hình URL API trong `agent-windows/.env` theo mẫu. HTTPS bắt buộc, chỉ loopback HTTP local được bật rõ bằng AGENT_ALLOW_LOCAL_HTTP=true. Không tắt xác minh TLS; NODE_TLS_REJECT_UNAUTHORIZED=0 bị từ chối.
 
 ```powershell
 pnpm --filter @automation/agent-windows pair
-# Nhập tên thiết bị, rồi mã ghép đôi ở ô nhập ẩn.
+# Kiểm tra URL server, nhập YES, nhập tên thiết bị rồi mã ở ô nhập ẩn.
 pnpm build
 pnpm --filter @automation/agent-windows start
 ```
@@ -34,7 +36,7 @@ DPAPI không bảo vệ khỏi malware chạy cùng Windows identity hoặc ngư
 
 ## Online/offline và reconnect
 
-Server ghi lastSeenAt bằng thời gian server; không nhận client timestamp, online state hoặc metrics tùy ý. Heartbeat 30 giây; ONLINE nếu credential active chưa hết hạn, thiết bị chưa revoke và heartbeat mới hơn 90 giây. OFFLINE là giá trị suy ra khi đọc, không cần cron hoặc socket. Pair xong nhưng chưa heartbeat là OFFLINE; REVOKED ưu tiên hơn ONLINE/OFFLINE. UI poll 15 giây và lấy tối đa 100 thiết bị mới nhất.
+Server ghi lastSeenAt bằng thời gian server; không nhận client timestamp, online state hoặc metrics tùy ý. Heartbeat 5 giây; ONLINE nếu credential active chưa hết hạn, thiết bị chưa revoke và heartbeat sau lần start API hiện tại và mới hơn 25 giây. OFFLINE là giá trị suy ra khi đọc, không cần cron hoặc socket. Pair xong nhưng chưa heartbeat là OFFLINE; REVOKED ưu tiên hơn ONLINE/OFFLINE. UI poll 5 giây (không chồng request) và lấy tối đa 100 thiết bị thuộc quyền. Request lỗi/timeout hoặc browser offline làm xóa snapshot, báo unknown; reconnect lấy dữ liệu mới. Không kết luận máy tắt từ việc FE mất VPS.
 
 Lỗi mạng/5xx/429 dùng exponential backoff có jitter, khoảng khởi đầu 0,75–1,25 giây, trần có jitter 75 giây. Thành công reset backoff. 401/403/409 dừng và yêu cầu xử lý identity; không dùng token user hay tự retry pair. Redirect upstream bị từ chối; timeout mặc định 5 giây và response tối đa 64 KiB. Log chỉ event/deviceId/delay hoặc thông báo an toàn, không body/token/code.
 

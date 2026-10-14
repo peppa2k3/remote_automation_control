@@ -1,5 +1,7 @@
 # Database khởi tạo
 
+Core 021 thêm migration `20261014000100_device_manager`: `devices.ownerId` FK users (nullable để giữ lịch sử khi user bị xóa), `devices.runtime` JSONB, `device_members` với khóa kép deviceId/userId và enum OPERATOR/VIEWER. Thiết bị cũ được backfill sang owner hệ thống hiện tại; thiết bị không còn owner/member không được trả cho người dùng. Pair mới luôn gán ownerId từ người tạo mã. Migration chỉ bổ sung, không reset hoặc xóa schema cũ. Global OWNER duy nhất vẫn là tài khoản bootstrap; không tự có quyền mọi máy. Uptime/RAM là snapshot tại heartbeat cuối, không phải chuỗi time-series; activity tối đa 50 bản ghi đọc từ audit_logs.
+
 PostgreSQL 17, Prisma ORM, timestamps UTC. Migration ban đầu chỉ tạo `SystemCheck` (UUID, label unique, createdAt/updatedAt) dùng kiểm thử write/read/delete trên database local/CI biệt lập. Không dùng bảng này làm queue.
 
 Schema business và các unique/index từ mục 5 `PROJECT_CONTEXT.md` được thêm qua migration trong prompt auth/device/queue tương ứng. Không chạy reset/db push trên DB có dữ liệu.

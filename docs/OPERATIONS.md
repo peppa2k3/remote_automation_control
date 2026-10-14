@@ -1,5 +1,7 @@
 # Vận hành local
 
+Core 021: bắt đầu ở [guide cho người mới](guides/start-here.md). VPS có [compose/HTTPS từng bước](guides/vps-setup.md), chưa được nghiệm thu trên domain thật của người dùng. `pnpm user:create` tạo tài khoản để chủ device chia sẻ quyền; Docker dùng `exec backend pnpm user:create`. Uptime/RAM và activity xem tại `/devices`. Snapshot REST 5 giây, heartbeat 5 giây, offline sau 25 giây; chỉ chạy một backend instance cho quy tắc presence theo thời điểm start hiện tại. Lease ACK và service cài tự động là bước sau.
+
 Theo README, chạy `pnpm setup:local` để tạo env local (không ghi đè), rồi start native hoặc full stack. Health live đo tiến trình; ready đo kết nối database. Agent diagnose kiểm tra health; pair/start thực hiện pairing và heartbeat.
 
 005 đã thêm pair/start/heartbeat/rotate và owner revoke UI. Windows Service install/reboot chưa thực hiện. Pair bằng cùng Windows identity sẽ chạy Agent; DPAPI CurrentUser yêu cầu profile. Không đổi sang LocalMachine hoặc đặt token trong env để khắc phục lỗi. [DEVICES](DEVICES.md) hướng dẫn recovery, credential TTL và `pnpm agent:smoke` trên Windows 11/DB test riêng. Gate Win11 hiện còn pending.

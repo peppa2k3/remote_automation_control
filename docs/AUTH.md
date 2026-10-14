@@ -1,3 +1,7 @@
+# Quyền device trong core 021
+
+Session/CSRF/throttle tiếp tục theo auth 004 bên dưới. Quyền toàn hệ thống không thay thế quyền máy: user đăng nhập có thể tạo mã pair và sở hữu nhiều máy; một device có một owner cùng các member VIEWER/OPERATOR. Chỉ owner device quản lý members/revoke. `pnpm user:create` tạo tài khoản global VIEWER qua terminal server với mật khẩu ẩn; không có signup công khai. Operator hiện chỉ xem, điều khiển cần prompt 022. Xem [CORE_ROADMAP](CORE_ROADMAP.md).
+
 # Đăng nhập quản trị và kế hoạch MFA
 
 ## Phần đã triển khai trong 004

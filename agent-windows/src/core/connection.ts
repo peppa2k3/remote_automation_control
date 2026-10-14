@@ -3,6 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import type { AgentMetadata } from '@automation/contracts';
 import { AgentApiError, type DeviceClient } from './client.js';
 import type { CredentialStore, LocalCredential } from './credential-store.js';
+import { runtimeSnapshot } from './runtime.js';
 
 export async function rotateCredential(
   store: CredentialStore,
@@ -65,7 +66,10 @@ export async function runHeartbeat(
         current = await rotateCredential(store, client, current);
         options.log({ event: 'agent.rotated', deviceId: current.identity.deviceId });
       }
-      const heartbeat = await client.heartbeat(current.token, metadata);
+      const heartbeat = await client.heartbeat(current.token, {
+        ...metadata,
+        runtime: runtimeSnapshot(),
+      });
       if (heartbeat.deviceId !== current.identity.deviceId) throw new Error('DEVICE_ID_MISMATCH');
       if (!connected)
         options.log({ event: 'agent.connected', deviceId: current.identity.deviceId });

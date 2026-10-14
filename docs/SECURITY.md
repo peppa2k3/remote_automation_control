@@ -1,3 +1,7 @@
+# Bổ sung core 021
+
+Ownership/membership của device được kiểm tra server-side; owner hệ thống không có quyền ngầm với máy khác. Mã pairing mới có entropy 256-bit, Agent yêu cầu xác nhận URL server tại local; device token vẫn hash trong DB, DPAPI CurrentUser tại Windows. Uptime/RAM/hostname chỉ có owner/member xem; không thu thập danh sách tiến trình/file. Unknown khi FE mất server không đồng nghĩa thiết bị tắt. Mẫu VPS có cookie Secure/HTTPS và không publish DB/API trực tiếp. Chưa có lease/executor/desktop; không mô tả operator có quyền chạy lệnh. Source starter không nằm trong runtime/build context.
+
 # Bảo mật
 
 Health vẫn công khai; các route nhạy cảm yêu cầu session và quyền server-side. Chưa có endpoint tạo job/publish; không coi health công khai là cơ chế đăng nhập. Public health không trả connection string, stack trace hay provider secret. `requestId` do server sinh; log chỉ method/path/status/duration, không query/body/token.

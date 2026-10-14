@@ -14,11 +14,7 @@ export default async function Devices() {
         </Link>
         <Link href="/">Dashboard</Link>
       </header>
-      {session.user.role === 'OWNER' ? (
-        <DevicePanel csrf={session.csrfToken} />
-      ) : (
-        <p role="alert">Chỉ owner được quản lý thiết bị.</p>
-      )}
+      <DevicePanel csrf={session.csrfToken} />
     </main>
   );
 }

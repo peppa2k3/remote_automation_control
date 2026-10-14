@@ -7,3 +7,4 @@ backend/src/generated
 pnpm-lock.yaml
 **/*.md
 frontend/next-env.d.ts
+remote-control-agent-core-base

@@ -41,7 +41,7 @@ export default async function Home() {
             Automation<span className="brand-light"> Control</span>
           </span>
         </Link>
-        <span className="environment">LOCAL / BOOTSTRAP</span>
+        <span className="environment">DEVICE MANAGER</span>
       </header>
       <SessionControls initial={session} />
       <section className="intro">
@@ -52,7 +52,7 @@ export default async function Home() {
           <span>cho ngôi nhà của bạn.</span>
         </h1>
         <p className="description">
-          Theo dõi nền tảng trước khi kết nối Windows Agent và thiết lập workflow đầu tiên.
+          Kết nối máy Windows, theo dõi hoạt động và chia sẻ quyền xem thiết bị của bạn.
         </p>
       </section>
       <section className="system-section" aria-labelledby="system-heading">
@@ -97,8 +97,8 @@ export default async function Home() {
           <p className="eyebrow">BƯỚC TIẾP THEO</p>
           <h2>Kết nối Windows Agent</h2>
           <p>
-            Ghép đôi máy Windows và theo dõi heartbeat. Agent chỉ kết nối outbound; hàng đợi công
-            việc sẽ được triển khai ở bước tiếp theo.
+            Ghép đôi máy Windows để xem trạng thái, thời gian hoạt động và bộ nhớ. Mở Quản lý thiết
+            bị để bắt đầu.
           </p>
         </div>
         <Link className="refresh" href="/devices">
@@ -107,7 +107,7 @@ export default async function Home() {
       </section>
       <footer>
         <span>VPS điều phối. Windows thực thi.</span>
-        <span>Khởi tạo nền tảng · v0.1.0</span>
+        <span>Core quản lý thiết bị · Bước 01</span>
       </footer>
     </main>
   );

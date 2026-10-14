@@ -1,0 +1,13 @@
+{
+  email {$ACME_EMAIL}
+}
+
+{$PUBLIC_DOMAIN} {
+  @native path /api/v1/agent/* /api/v1/health/*
+  handle @native {
+    reverse_proxy backend:4000
+  }
+  handle {
+    reverse_proxy frontend:3000
+  }
+}

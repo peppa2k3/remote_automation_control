@@ -1,0 +1,33 @@
+# Use with compose.yml when Traefik already owns ports 80/443.
+services:
+  gateway:
+    profiles: [standalone-gateway]
+  backend:
+    networks: [database, app, edge]
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: ${TRAEFIK_NETWORK:?Set existing Traefik network}
+      traefik.http.routers.device-manager-api.rule: Host(`${PUBLIC_DOMAIN}`) && (PathPrefix(`/api/v1/agent/`) || PathPrefix(`/api/v1/health/`))
+      traefik.http.routers.device-manager-api.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Set existing HTTPS entrypoint}
+      traefik.http.routers.device-manager-api.tls: 'true'
+      traefik.http.routers.device-manager-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Set existing certresolver}
+      traefik.http.routers.device-manager-api.priority: '100'
+      traefik.http.routers.device-manager-api.service: device-manager-api
+      traefik.http.services.device-manager-api.loadbalancer.server.port: '4000'
+  frontend:
+    networks: [app, edge]
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: ${TRAEFIK_NETWORK:?Set existing Traefik network}
+      traefik.http.routers.device-manager-web.rule: Host(`${PUBLIC_DOMAIN}`)
+      traefik.http.routers.device-manager-web.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Set existing HTTPS entrypoint}
+      traefik.http.routers.device-manager-web.tls: 'true'
+      traefik.http.routers.device-manager-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Set existing certresolver}
+      traefik.http.routers.device-manager-web.priority: '10'
+      traefik.http.routers.device-manager-web.service: device-manager-web
+      traefik.http.services.device-manager-web.loadbalancer.server.port: '3000'
+
+networks:
+  edge:
+    external: true
+    name: ${TRAEFIK_NETWORK:?Set existing Traefik network}

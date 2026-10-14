@@ -1,7 +1,9 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
-  agentMetadataSchema,
+  heartbeatInputSchema,
+  memberInputSchema,
+  removeMemberInputSchema,
   deviceTokenSchema,
   emptyInputSchema,
   pairInputSchema,
@@ -9,7 +11,6 @@ import {
   success,
 } from '@automation/contracts';
 import { AuthError } from '../auth/types.js';
-import { requireOwner } from '../auth/http.js';
 import type { DeviceService } from './service.js';
 
 function json(req: Request) {
@@ -52,7 +53,7 @@ export function createAgentRouter(service: DeviceService): Router {
     json(req);
     res.json(
       success(
-        await service.heartbeat(raw, parse(agentMetadataSchema, req.body)),
+        await service.heartbeat(raw, parse(heartbeatInputSchema, req.body)),
         res.locals.requestId,
       ),
     );
@@ -93,9 +94,8 @@ export function createAgentRouter(service: DeviceService): Router {
 }
 export function createDeviceRouter(service: DeviceService): Router {
   const router = Router();
-  router.use(requireOwner());
   router.get('/', async (_req, res) =>
-    res.json(success(await service.list(), res.locals.requestId)),
+    res.json(success(await service.list(res.locals.auth.user.id), res.locals.requestId)),
   );
   router.post('/pairing-code', async (req, res) => {
     parse(emptyInputSchema, req.body);
@@ -111,6 +111,40 @@ export function createDeviceRouter(service: DeviceService): Router {
     const id = parse(z.uuid(), req.params.deviceId);
     await service.revoke(id, res.locals.auth.user.id, res.locals.requestId);
     res.json(success({ revoked: true }, res.locals.requestId));
+  });
+  router.get('/:deviceId/activity', async (req, res) => {
+    res.json(
+      success(
+        await service.activity(parse(z.uuid(), req.params.deviceId), res.locals.auth.user.id),
+        res.locals.requestId,
+      ),
+    );
+  });
+  router.get('/:deviceId/members', async (req, res) => {
+    res.json(
+      success(
+        await service.members(parse(z.uuid(), req.params.deviceId), res.locals.auth.user.id),
+        res.locals.requestId,
+      ),
+    );
+  });
+  router.post('/:deviceId/members', async (req, res) => {
+    await service.setMember(
+      parse(z.uuid(), req.params.deviceId),
+      res.locals.auth.user.id,
+      parse(memberInputSchema, req.body),
+      res.locals.requestId,
+    );
+    res.json(success({ updated: true }, res.locals.requestId));
+  });
+  router.post('/:deviceId/members/remove', async (req, res) => {
+    await service.removeMember(
+      parse(z.uuid(), req.params.deviceId),
+      res.locals.auth.user.id,
+      parse(removeMemberInputSchema, req.body).userId,
+      res.locals.requestId,
+    );
+    res.json(success({ removed: true }, res.locals.requestId));
   });
   return router;
 }

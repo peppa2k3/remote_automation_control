@@ -9,6 +9,7 @@ import { parseAgentConfig } from '../config.js';
 import { DpapiCredentialStore } from './credential-store.js';
 import { HttpDeviceClient } from './client.js';
 import { rotateCredential, runHeartbeat } from './connection.js';
+import { runtimeSnapshot } from './runtime.js';
 
 async function hiddenCode() {
   if (!stdin.isTTY || !stdout.isTTY) throw new Error('TTY_REQUIRED');
@@ -40,7 +41,7 @@ async function hiddenCode() {
         }
         if (char === '\b' || char === '\u007f') value = value.slice(0, -1);
         else if (char >= ' ') {
-          if (value.length < 64) value += char;
+          if (value.length < 96) value += char;
           else overflow = true;
         }
       }
@@ -76,6 +77,12 @@ async function main() {
       if (current) throw new Error('ALREADY_PAIRED');
       if (!stdin.isTTY || !stdout.isTTY) throw new Error('TTY_REQUIRED');
       const terminal = createInterface({ input: stdin, output: stdout });
+      stdout.write(`Máy này sẽ kết nối tới: ${base}\n`);
+      const consent = await terminal.question('Đây là server của bạn? Nhập YES để tiếp tục: ');
+      if (consent !== 'YES') {
+        terminal.close();
+        throw new Error('CONSENT_REQUIRED');
+      }
       const label = await terminal.question('Tên thiết bị: ');
       terminal.close();
       const input = pairInputSchema.parse({ ...metadata, label, code: await hiddenCode() });
@@ -92,7 +99,10 @@ async function main() {
     }
     if (command === 'rotate') return;
     if (command === 'heartbeat') {
-      const heartbeat = await client.heartbeat(current.token, metadata);
+      const heartbeat = await client.heartbeat(current.token, {
+        ...metadata,
+        runtime: runtimeSnapshot(),
+      });
       if (heartbeat.deviceId !== current.identity.deviceId) throw new Error('DEVICE_ID_MISMATCH');
       console.log(JSON.stringify({ event: 'agent.heartbeat', deviceId: heartbeat.deviceId }));
       return;

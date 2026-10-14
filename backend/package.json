@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "user:create": "tsx src/modules/auth/user-cli.ts",
     "owner:bootstrap": "tsx src/modules/auth/bootstrap-cli.ts",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",

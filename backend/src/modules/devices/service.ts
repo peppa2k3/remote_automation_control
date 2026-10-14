@@ -1,7 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import {
   DEVICE_SCOPES,
+  DEVICE_OFFLINE_MS,
+  HEARTBEAT_SECONDS,
   deviceSchema,
+  runtimeSchema,
+  type HeartbeatInput,
   type AgentMetadata,
   type DeviceIdentity,
 } from '@automation/contracts';
@@ -22,10 +26,13 @@ const denied = () =>
   );
 
 export class DeviceService {
+  private readonly startedAt: Date;
   constructor(
     readonly db: PrismaClient,
     private readonly clock = () => new Date(),
-  ) {}
+  ) {
+    this.startedAt = this.clock();
+  }
   private async lock(tx: Prisma.TransactionClient, id: string) {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`device:${id}`}, 0))`;
   }
@@ -71,7 +78,7 @@ export class DeviceService {
       ))
     )
       throw new AuthError(429, 'PAIR_RATE_LIMITED', 'Đã vượt giới hạn tạo mã ghép đôi.');
-    const code = `pair_${randomBytes(16).toString('hex')}`,
+    const code = `pair_${randomBytes(32).toString('hex')}`,
       expiresAt = new Date(now.getTime() + pendingMs);
     await this.db.$transaction(async (tx) => {
       const record = await tx.pairingCode.create({
@@ -109,7 +116,6 @@ export class DeviceService {
         !code ||
         code.usedAt ||
         code.expiresAt <= now ||
-        code.owner.role !== 'OWNER' ||
         code.owner.status !== 'ACTIVE' ||
         code.owner.mfaEnabled
       )
@@ -121,7 +127,7 @@ export class DeviceService {
       await tx.pairingCode.update({ where: { id: code.id }, data: { usedAt: now } });
       const { label, platform, arch, version, capabilities } = input;
       const device = await tx.device.create({
-        data: { label, platform, arch, version, capabilities },
+        data: { label, platform, arch, version, capabilities, ownerId: code.createdBy },
       });
       const record = await tx.deviceCredential.create({
         data: {
@@ -144,17 +150,33 @@ export class DeviceService {
       throw new AuthError(403, 'DEVICE_SCOPE_REQUIRED', 'Credential không có quyền này.');
     return record;
   }
-  async heartbeat(token: string, metadata: AgentMetadata) {
+  async heartbeat(token: string, metadata: HeartbeatInput) {
     const auth = await this.authenticate(token, 'agent:heartbeat');
     return this.db.$transaction(async (tx) => {
       await this.lock(tx, auth.deviceId);
-      await this.credential(tx, deviceHash(token));
+      const record = await this.credential(tx, deviceHash(token));
       const now = this.clock();
+      if (
+        !record.device.lastSeenAt ||
+        record.device.lastSeenAt < this.startedAt ||
+        now.getTime() - record.device.lastSeenAt.getTime() >= DEVICE_OFFLINE_MS
+      )
+        await tx.auditLog.create({
+          data: {
+            targetId: auth.deviceId,
+            action: 'device.online',
+            requestId: crypto.randomUUID(),
+          },
+        });
       await tx.device.update({
         where: { id: auth.deviceId },
         data: { ...metadata, lastSeenAt: now },
       });
-      return { deviceId: auth.deviceId, serverTime: now.toISOString(), heartbeatAfterSeconds: 30 };
+      return {
+        deviceId: auth.deviceId,
+        serverTime: now.toISOString(),
+        heartbeatAfterSeconds: HEARTBEAT_SECONDS,
+      };
     });
   }
   async stageRotation(token: string, nextToken: string, requestId: string) {
@@ -227,7 +249,8 @@ export class DeviceService {
     await this.db.$transaction(async (tx) => {
       await this.lock(tx, deviceId);
       const device = await tx.device.findUnique({ where: { id: deviceId } });
-      if (!device) throw new AuthError(404, 'DEVICE_NOT_FOUND', 'Không tìm thấy thiết bị.');
+      if (!device || device.ownerId !== ownerId)
+        throw new AuthError(403, 'DEVICE_OWNER_REQUIRED', 'Chỉ chủ thiết bị được thao tác.');
       if (device.revokedAt) return;
       const now = this.clock();
       await tx.device.update({ where: { id: deviceId }, data: { revokedAt: now } });
@@ -240,12 +263,14 @@ export class DeviceService {
       });
     });
   }
-  async list() {
+  async list(userId: string) {
     const now = this.clock();
     const devices = await this.db.device.findMany({
+      where: { OR: [{ ownerId: userId }, { members: { some: { userId } } }] },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 100,
       include: {
+        members: { where: { userId } },
         credentials: {
           where: { activatedAt: { not: null }, revokedAt: null, expiresAt: { gt: now } },
           orderBy: { createdAt: 'desc' },
@@ -263,15 +288,90 @@ export class DeviceService {
         capabilities: device.capabilities,
         lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
         revokedAt: device.revokedAt?.toISOString() ?? null,
+        role: device.ownerId === userId ? 'OWNER' : device.members[0]!.role,
+        runtime: runtimeSchema.safeParse(device.runtime).success ? device.runtime : null,
         onlineState: device.revokedAt
           ? 'REVOKED'
           : device.credentials.length &&
               device.lastSeenAt &&
-              now.getTime() - device.lastSeenAt.getTime() < 90_000
+              device.lastSeenAt >= this.startedAt &&
+              now.getTime() - device.lastSeenAt.getTime() < DEVICE_OFFLINE_MS
             ? 'ONLINE'
             : 'OFFLINE',
-        credentialFingerprint: device.credentials[0]?.tokenHash.slice(0, 12) ?? null,
+        credentialFingerprint:
+          device.ownerId === userId
+            ? (device.credentials[0]?.tokenHash.slice(0, 12) ?? null)
+            : null,
       }),
     );
+  }
+  private async access(
+    db: Prisma.TransactionClient | PrismaClient,
+    deviceId: string,
+    userId: string,
+    ownerOnly = false,
+  ) {
+    const device = await db.device.findUnique({
+      where: { id: deviceId },
+      include: { members: { where: { userId } } },
+    });
+    if (!device || (device.ownerId !== userId && (ownerOnly || !device.members.length)))
+      throw new AuthError(403, 'DEVICE_ACCESS_DENIED', 'Bạn không có quyền truy cập thiết bị này.');
+    return device;
+  }
+  async members(deviceId: string, userId: string) {
+    await this.access(this.db, deviceId, userId, true);
+    const rows = await this.db.deviceMember.findMany({
+      where: { deviceId },
+      include: { user: true },
+      orderBy: { userId: 'asc' },
+      take: 100,
+    });
+    return rows.map((row) => ({ userId: row.userId, email: row.user.email, role: row.role }));
+  }
+  async setMember(
+    deviceId: string,
+    ownerId: string,
+    input: { email: string; role: 'OPERATOR' | 'VIEWER' },
+    requestId: string,
+  ) {
+    await this.db.$transaction(async (tx) => {
+      await this.lock(tx, deviceId);
+      const device = await this.access(tx, deviceId, ownerId, true);
+      if (device.revokedAt) throw new AuthError(409, 'DEVICE_REVOKED', 'Thiết bị đã bị thu hồi.');
+      const user = await tx.user.findUnique({ where: { email: input.email } });
+      if (!user || user.status !== 'ACTIVE')
+        throw new AuthError(404, 'USER_NOT_FOUND', 'Tài khoản chưa được tạo hoặc đã khóa.');
+      if (user.id === device.ownerId)
+        throw new AuthError(400, 'OWNER_ALREADY_MEMBER', 'Chủ thiết bị đã có đầy đủ quyền.');
+      await tx.deviceMember.upsert({
+        where: { deviceId_userId: { deviceId, userId: user.id } },
+        create: { deviceId, userId: user.id, role: input.role },
+        update: { role: input.role },
+      });
+      await tx.auditLog.create({
+        data: { actorId: ownerId, targetId: deviceId, action: 'device.member.updated', requestId },
+      });
+    });
+  }
+  async removeMember(deviceId: string, ownerId: string, userId: string, requestId: string) {
+    await this.db.$transaction(async (tx) => {
+      await this.lock(tx, deviceId);
+      await this.access(tx, deviceId, ownerId, true);
+      await tx.deviceMember.deleteMany({ where: { deviceId, userId } });
+      await tx.auditLog.create({
+        data: { actorId: ownerId, targetId: deviceId, action: 'device.member.removed', requestId },
+      });
+    });
+  }
+  async activity(deviceId: string, userId: string) {
+    await this.access(this.db, deviceId, userId);
+    const rows = await this.db.auditLog.findMany({
+      where: { targetId: deviceId, action: { startsWith: 'device.' } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 50,
+      select: { id: true, action: true, createdAt: true },
+    });
+    return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
   }
 }

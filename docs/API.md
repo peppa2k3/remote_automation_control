@@ -1,5 +1,21 @@
 # API hiện tại
 
+## Core device manager (021)
+
+Quyền device theo ownerId/member, không theo role OWNER toàn hệ thống. Mọi user đăng nhập được list máy của mình/được chia sẻ và tạo mã pair cho máy mình. Pair tạo code 256-bit (vẫn nhận code cũ 128-bit còn hạn trong rollout). Các mutation browser vẫn yêu cầu Origin + CSRF + JSON. Native Agent dùng bearer riêng.
+
+| Method / path sau `/api/v1` | Quyền | Kết quả |
+|---|---|---|
+| GET /devices | User đăng nhập | Snapshot tối đa 100 máy thuộc quyền, role OWNER/OPERATOR/VIEWER, runtime nullable, meshStatus NOT_INTEGRATED |
+| POST /devices/pairing-code | User đăng nhập | Mã 5 phút một lần; người tạo mã thành owner device |
+| POST /devices/:id/revoke | Owner của device | Revoke device và credentials |
+| GET /devices/:id/activity | Owner/member | 50 sự kiện mới nhất: id, action, createdAt; không secret |
+| GET /devices/:id/members | Owner của device | userId, email, role |
+| POST /devices/:id/members | Owner + `{email, role: OPERATOR hoặc VIEWER}` | Thêm/cập nhật quyền tài khoản đã tạo |
+| POST /devices/:id/members/remove | Owner + `{userId}` | Gỡ quyền, lần đọc tiếp theo không thấy máy |
+
+Heartbeat nhận metadata cũ và `runtime` tùy chọn: hostname, uptimeSeconds, agentUptimeSeconds, memoryTotalBytes, memoryFreeBytes, cpuCount. Runtime strict, số không âm, free <= total; không nhận command/path. Server trả heartbeatAfterSeconds=5. ONLINE cần credential còn hạn và heartbeat sau lần khởi động API hiện tại, mới hơn 25 giây. FE không tới API là UNKNOWN ở client, không ghi trạng thái này vào DB. Bảng 005 dưới đây mô tả lịch sử endpoint; quyền list/pair/revoke được thay bởi bảng 021 này.
+
 Base path `/api/v1`. Envelope luôn có `success`, `data`, `error`, `requestId`. Header `X-Request-Id` trùng trường JSON. Error chỉ có `code` và thông báo an toàn.
 
 | Method / path | Status | Hành vi |

@@ -380,3 +380,38 @@ footer {
   overflow-wrap: anywhere;
   margin: 1rem 0;
 }
+.device-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 20px 0;
+}
+.device-metrics dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.device-details {
+  margin: 20px 0;
+}
+.device-details form,
+.device-details label {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+.device-details input,
+.device-details select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #15283a;
+  color: #eef4fa;
+}
+.device-details ul {
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}

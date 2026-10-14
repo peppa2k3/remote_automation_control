@@ -1,5 +1,7 @@
 # Quy tắc làm việc của AI Agent
 
+Ưu tiên hiện tại theo yêu cầu 14/10/2026: [CORE_ROADMAP](docs/CORE_ROADMAP.md), ADR 003 và prompt 021. Hoàn thiện core kết nối/giám sát trước lease điều khiển/script/desktop. Source `remote-control-agent-core-base` chỉ tham khảo, không chạy như workspace thứ hai. Dùng hướng dẫn [start-here](docs/guides/start-here.md) cho người mới. Auth hệ thống và owner/member theo device là hai lớp quyền khác nhau; không cấp quyền device ngầm cho admin hệ thống.
+
 Đọc toàn bộ `docs/PROJECT_CONTEXT.md`, `docs/CONTEXT_RULES.md`, `docs/ARCHITECTURE.md`, prompt đang xử lý và mã liên quan trước khi thay đổi. `PROJECT_CONTEXT.md` ở gốc là bản nguồn; bản trong docs phải đồng bộ byte-for-byte. Tài liệu và thông báo dùng tiếng Việt; code, API, schema dùng tiếng Anh.
 
 ## Phạm vi và kiến trúc

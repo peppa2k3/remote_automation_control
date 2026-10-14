@@ -1,3 +1,7 @@
+# Ưu tiên mới: core device manager
+
+Từ 14/10/2026, làm theo [CORE_ROADMAP](CORE_ROADMAP.md) và các prompt 021–024. Bảng 001–020 bên dưới là backlog automation được giữ lại; 005 vẫn PARTIAL do gate Windows 11. Prompt 021 tích hợp giám sát và quyền thiết bị vào phần đã làm, không tuyên bố hoàn tất lease/ACK của starter.
+
 # Roadmap và trạng thái prompt
 
 Theo baseline T00–T17; đọc vị trí file để biết trạng thái hiện tại. ID là thứ tự nhận dạng, không bắt buộc thứ tự chạy tuyệt đối: **011 Meta feasibility cần chạy sớm ngay sau 004 auth** khi đã có quyền/Page; 005–010 có thể tiếp tục độc lập spike.
@@ -26,4 +30,3 @@ Theo baseline T00–T17; đọc vị trí file để biết trạng thái hiện
 | 020 | NONE | Tổng kiểm tra release và bàn giao | 015 |
 
 Vòng đời: `docs/promt` → `docs/processing` → `docs/completed`. Prompt PARTIAL/BLOCKED giữ trong processing. Nhật ký ở `docs/IMPLEMENTATION_LOG.md`. 016–019 là mở rộng tùy chọn; gate 020 dựa trên MVP, không buộc hoàn thành các module tùy chọn.
-

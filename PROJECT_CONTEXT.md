@@ -1,5 +1,19 @@
 # PROJECT_CONTEXT.md — HOME AUTOMATION CONTROL PLATFORM
 
+## Cập nhật ưu tiên 14/10/2026 — Core quản lý thiết bị
+
+Yêu cầu mới: chuyển logic phù hợp từ `remote-control-agent-core-base` vào dự án đang có, phát triển từ cơ bản lên nâng cao cho người mới. Mục tiêu hiện tại là **Windows local → VPS/server → web manager xem trạng thái và hoạt động thiết bị**. Các mục baseline phía dưới về tải file/publish là định hướng dài hạn, không phải phạm vi core hiện tại.
+
+- Giữ Next.js/Express/Prisma/PostgreSQL, auth cookie/CSRF, DPAPI và rotation đã có; không nhập SQLite/Vite hoặc tạo app thứ hai.
+- Tách owner hệ thống và owner theo máy; mỗi máy một owner, nhiều viewer/operator qua membership. Quyền kiểm tra server-side, không có admin bypass ngầm.
+- Core dùng REST heartbeat/poll 5 giây, offline sau 25 giây; FE mất server hiển thị unknown và lấy snapshot mới khi phục hồi. API restart yêu cầu heartbeat mới. Hiển thị uptime/RAM/CPU count và audit an toàn.
+- Enrollment mã 256-bit/5 phút/one-use, xác nhận URL tại local. Agent outbound, không mở inbound.
+- Lease điều khiển pending/ACK, Socket.IO, MeshCentral và allowlist runner là prompt tiếp theo trước mọi hành động điều khiển. Operator ở core chỉ xem. Không nhập shell/eval từ web.
+- VPS mẫu một domain HTTPS; ưu tiên proxy hiện hữu. Mẫu Caddy riêng chỉ cho VPS còn trống 80/443. Không deploy thật khi chưa có thông số/quyền; không tự đánh dấu nghiệm thu Windows 11/VPS.
+- Lộ trình đang áp dụng: `docs/CORE_ROADMAP.md` và prompt 021–024; hướng dẫn thực hành: `docs/guides/start-here.md`, `docs/guides/vps-setup.md`. ADR 003 ghi quyết định chuyển đổi. Các quyết định và ví dụ env bên dưới là baseline cũ nếu mâu thuẫn với phần này; env mẫu/code hiện tại là nguồn cấu hình thực tế.
+
+---
+
 > **Phiên bản:** 1.0 | **Ngày khởi tạo:** 2026-10-12 | **Trạng thái:** Architecture baseline / chưa triển khai
 >
 > **Mục đích:** Nguồn ngữ cảnh chính (single source of truth) cho Codex/Copilot/AI Coding Agent, dùng xuyên suốt quá trình phát triển theo từng task. Đọc tài liệu này trước khi thiết kế, sửa code hoặc đề xuất công nghệ.

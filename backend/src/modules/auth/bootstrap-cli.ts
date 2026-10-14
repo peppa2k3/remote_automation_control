@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { createDatabase } from '../../database.js';
@@ -61,11 +62,12 @@ async function main() {
     await db.$disconnect();
   }
 }
-main().catch((error) => {
-  console.error(
-    error instanceof AuthError
-      ? error.message
-      : 'Bootstrap không thành công. Cần TTY tương tác, DATABASE_URL hợp lệ và mật khẩu xác nhận trùng nhau.',
-  );
-  process.exitCode = 1;
-});
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  main().catch((error) => {
+    console.error(
+      error instanceof AuthError
+        ? error.message
+        : 'Bootstrap không thành công. Cần TTY tương tác, DATABASE_URL hợp lệ và mật khẩu xác nhận trùng nhau.',
+    );
+    process.exitCode = 1;
+  });

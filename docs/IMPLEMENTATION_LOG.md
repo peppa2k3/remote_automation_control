@@ -64,3 +64,15 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - Docker stack healthy, migrate exit 0 trước API; stack checker và auth regression/ADMIN device denial/devices page PASS. Auth smoke không DB/có DB + diagnose Agent PASS; Next native CLI có warning standalone, Docker dùng standalone riêng.
 - Giới hạn: gate Win11 chưa chạy; chưa Browser visual QA/remote CI, Windows Service/reboot/multi-user DPAPI hoặc provider E2E, job claim/result, retention/cleanup. Không deploy VPS/public publish. DEVICES.md có hướng dẫn `pnpm agent:smoke` trên Win11 với DB test trống để chốt gate; không chuyển completed hoặc bắt đầu dependency 006 khi chưa đạt gate.
 - Commit reference: subject `feat(005): implement scoped device pairing and DPAPI heartbeat`. Khi Win11 PASS, append kết quả xác minh mới rồi chuyển prompt completed; giữ lịch sử PARTIAL này.
+
+## 2026-10-14 — 021 — Core device manager cho người mới
+
+- Theo yêu cầu tích hợp logic `remote-control-agent-core-base`, giữ monorepo Next.js/Express/PostgreSQL và auth/DPAPI/rotation đã hoàn thiện. Không thay DB/framework; không chạy starter như app thứ hai. ADR 003 và context ưu tiên core giám sát trước điều khiển/script.
+- Thêm owner theo device, membership OPERATOR/VIEWER, API/UI chia sẻ và lịch sử an toàn; global OWNER không có quyền ngầm xem máy người khác. CLI `user:create` tạo tài khoản qua terminal, password ẩn. Pair code mới 256-bit và local xác nhận URL.
+- Heartbeat 5 giây, offline 25 giây; restart API cần heartbeat mới. Agent gửi uptime/RAM/CPU count/hostname; FE snapshot 5 giây, mất server xóa dữ liệu cũ và hiển thị unknown. Chưa có lease/Socket.IO/executor/desktop.
+- Migration chỉ thêm owner/member/runtime và backfill device cũ; test nâng cấp dữ liệu 005 giữ nguyên device/credential PASS. Thêm tests filtering, membership escalation/removal, runtime validation, restart/revoke và kiểm tra snapshot/activity qua FE trong native smoke.
+- PASS: lint, typecheck, 37 unit tests, build, 13 integration PostgreSQL thật, auth runtime smoke, native Windows 10 Agent smoke (DPAPI/restart/rotate/outage/reconnect/revoke/no-secret logs), Compose config cho Caddy và Traefik, docs check/local links/diff whitespace.
+- Hướng dẫn mới: `docs/guides/start-here.md`, `vps-setup.md`, CORE_ROADMAP và prompt 022–024. Mẫu VPS một domain HTTPS với Caddy hoặc Traefik hiện hữu; setup-vps tạo env exclusive/random password. Đưa cả bộ guides đã soạn ở lượt trước vào commit này.
+- Môi trường: ổ C hết dung lượng, Docker CLI/DB cũ timeout. Không restart/xóa stack khác; test trên PostgreSQL 17 tạm riêng tại ổ D, loopback 55441; DB fixture và tiến trình được dọn/dừng. Không sửa env runtime có sẵn hoặc deploy lên VPS.
+- Giới hạn: chưa browser visual QA (không browser khả dụng), chưa VPS/domain thật/CI remote/build image VPS mới, Linux Agent/Windows Service. Win11 gate 005 vẫn PARTIAL. Operator hiện chỉ xem; control ACK thuộc 022. Core 021 DONE trong phạm vi giám sát, không tuyên bố toàn bộ core starter/desktop đã hoàn tất.
+- Commit reference: subject `feat(021): integrate beginner device monitoring core`.

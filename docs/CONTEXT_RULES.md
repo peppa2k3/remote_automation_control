@@ -1,5 +1,7 @@
 # Context rules và vòng đời prompt
 
+Từ 14/10/2026, lộ trình chủ động là [CORE_ROADMAP](CORE_ROADMAP.md): 021 core giám sát, 022 lease có ACK, 023 allowlist runner, 024 MeshCentral tùy chọn. Backlog 006–020 giữ để tham chiếu/chọn sau; không tự triển khai publish trước khi core được người dùng kiểm chứng.
+
 ## Thứ tự đọc
 
 1. Yêu cầu mới nhất của chủ dự án.
