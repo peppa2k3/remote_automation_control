@@ -76,3 +76,12 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - Môi trường: ổ C hết dung lượng, Docker CLI/DB cũ timeout. Không restart/xóa stack khác; test trên PostgreSQL 17 tạm riêng tại ổ D, loopback 55441; DB fixture và tiến trình được dọn/dừng. Không sửa env runtime có sẵn hoặc deploy lên VPS.
 - Giới hạn: chưa browser visual QA (không browser khả dụng), chưa VPS/domain thật/CI remote/build image VPS mới, Linux Agent/Windows Service. Win11 gate 005 vẫn PARTIAL. Operator hiện chỉ xem; control ACK thuộc 022. Core 021 DONE trong phạm vi giám sát, không tuyên bố toàn bộ core starter/desktop đã hoàn tất.
 - Commit reference: subject `feat(021): integrate beginner device monitoring core`.
+
+## 2026-10-15 — 021 follow-up — Chẩn đoán kết nối qua proxy
+
+- Tiếp tục nghiệm thu core từ commit `6a7a0d4`; phát hiện `stack:check` gọi audit endpoint không được public trong mẫu VPS. Chuyển kiểm tra ẩn danh sang Device API qua Next, phù hợp cùng domain và local hai port.
+- Thêm timeout cho toàn bộ request/body/assets, kiểm tra redirect rõ ràng, tổng hợp lỗi với hướng dẫn tiếng Việt và exit code 1. Không in body/error chứa secret, không thay env runtime hoặc DB.
+- Thêm 5 tests dùng HTTP fixture thật tại loopback; tích hợp vào `pnpm test`. Guides bổ sung lệnh kiểm tra VPS từ Windows/Linux và lưu ý Docker treo.
+- Docker info vẫn timeout sau 15 giây; ổ C hiện còn khoảng 1,1 GB. Không restart engine hoặc đụng dữ liệu stack khác. Chưa build/run image VPS, deploy HTTPS thật hoặc nghiệm thu Windows 11. 022 vẫn PLANNED theo ưu tiên kiểm chứng core trước điều khiển.
+- Commit reference: `fix(021): make stack checks work through the VPS proxy`.
+- PASS: lint, typecheck, 5 script tests + 37 unit tests, build, docs lifecycle/context, diff whitespace. DB/DPAPI smoke không chạy lại ở đợt sửa công cụ này; kết quả runtime trước đó giữ theo mục 14/10, không coi fixture là bằng chứng VPS thật.

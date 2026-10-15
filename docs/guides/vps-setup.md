@@ -93,6 +93,8 @@ Tạo mã trên web VPS, kiểm tra URL và nhập `YES` tại Agent, nhập mã
 
 ## 5. Kiểm chứng thực tế trước khi dùng thường xuyên
 
+Chạy `pnpm stack:check` từ máy phát triển với `CHECK_SITE_URL` và `CHECK_API_BASE_URL` trỏ về domain VPS theo [hướng dẫn kiểm tra](verification.md). Lệnh kiểm tra health, web, Device API ẩn danh và assets mà không cần tài khoản; sau đó thực hiện các bước dưới đây.
+
 - Web từ mạng ngoài đăng nhập được và hiển thị đúng Agent.
 - Dừng Agent/mất mạng: offline sau 25 giây không heartbeat cộng thời gian web poll.
 - Mất kết nối từ browser tới VPS: UI unknown; nối lại nhận snapshot mới.

@@ -59,3 +59,13 @@ Mọi đọc/mutation device lọc owner/member tại backend, không dựa role
 
 Commit reference: `feat(021): integrate beginner device monitoring core`.
 Tiếp theo: nghiệm thu local/VPS theo guide; 022 khi cần phiên điều khiển có local ACK.
+
+## Bổ sung 15/10/2026 — Kiểm tra kết nối local/VPS
+
+- Sửa `scripts/check-stack.mjs`: dùng Device API qua frontend thay vì audit endpoint nội bộ không được public trên VPS; chuẩn hóa dấu `/` cuối URL, chặn URL chứa credentials/query/fragment.
+- Mọi request, kể cả đọc body và tải assets, có timeout; không tự follow redirect; tiếp tục các bước độc lập khi lỗi và trả exit code khác 0. Thông báo tiếng Việt chỉ cách xử lý, không in response body/secret.
+- Thêm 5 regression tests với HTTP server loopback tạm: domain chung, DB 503, body treo, asset redirect và URL chứa credential. Root `pnpm test` chạy thêm nhóm này.
+- Cập nhật guides verification/VPS với các lệnh Windows/Linux. Chưa thay đổi auth, telemetry, migration hay `.env` thật.
+- Docker Engine vẫn timeout sau 15 giây dù ổ C còn khoảng 1,1 GB. Chưa nghiệm thu container/VPS/Windows 11; các giới hạn phía trên vẫn áp dụng.
+- Commit reference: `fix(021): make stack checks work through the VPS proxy`.
+- Validation: `pnpm lint`, `pnpm typecheck`, `pnpm test` (5 script tests + 37 unit tests), `pnpm build`, `pnpm docs:check`, `git diff --check`: PASS. HTTP fixture không thay thế nghiệm thu VPS thật; không chạy lại DB/DPAPI smoke vì đợt này không thay runtime ứng dụng.

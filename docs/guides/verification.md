@@ -11,6 +11,19 @@ pnpm --filter @automation/agent-windows diagnose
 
 `stack:check` kiểm tra cả FE/API/DB, redirect dashboard ẩn danh và assets. Sau đó đăng nhập ở `http://localhost:3000/login`, mở `/devices`, tạo mã pair và kiểm tra thiết bị chuyển ONLINE sau khi Agent `start` heartbeat. Nếu chỉ muốn gửi một heartbeat rồi thoát, chạy `pnpm --filter @automation/agent-windows heartbeat` trên Windows đã pair.
 
+Mỗi request có timeout 10 giây, kể cả khi server trả header rồi treo phần body. Lệnh tiếp tục kiểm tra các bước còn lại sau một lỗi, in gợi ý xử lý và trả exit code `1` nếu có bước lỗi. Không in nội dung response hoặc secret. PASS chỉ xác nhận kết nối và chặn khách chưa đăng nhập; vẫn cần đăng nhập/pair và kiểm tra Agent thực tế.
+
+Để kiểm tra VPS từ máy Windows đã clone repo và cài Node/pnpm, thay domain ví dụ:
+
+```powershell
+$env:CHECK_SITE_URL = 'https://control.example.com'
+$env:CHECK_API_BASE_URL = 'https://control.example.com/api/v1'
+pnpm stack:check
+Remove-Item Env:CHECK_SITE_URL, Env:CHECK_API_BASE_URL
+```
+
+Hai biến chỉ áp dụng trong terminal hiện tại, không sửa file `.env`. Đặt cả hai khi kiểm tra VPS để tránh kiểm tra nhầm API localhost. Domain cần HTTPS hợp lệ; không tắt kiểm tra chứng chỉ. Device API được kiểm tra qua frontend, đúng với cấu hình Caddy/Traefik. Trên Linux dùng `CHECK_SITE_URL=https://control.example.com CHECK_API_BASE_URL=https://control.example.com/api/v1 pnpm stack:check`.
+
 | Triệu chứng | Kiểm tra đầu tiên | Cách xử lý |
 |---|---|---|
 | `live` lỗi kết nối | BE chưa chạy hoặc cổng sai | Kiểm tra `pnpm dev` hoặc `docker compose -f infrastructure/compose/compose.yml --profile stack ps`; so URL/cổng với env |
@@ -21,6 +34,7 @@ pnpm --filter @automation/agent-windows diagnose
 | Port 3000/4000/5432 đã dùng | Hai chế độ cùng chạy hoặc service khác giữ port | Dừng đúng chế độ đang chạy; khi đổi port Compose phải rebuild FE và cập nhật các URL liên quan |
 | Agent `diagnose` lỗi | URL API hoặc TLS sai | So `AGENT_API_BASE_URL`; `localhost` chỉ trỏ về chính máy Agent; HTTP chỉ cho loopback local với cờ cho phép |
 | Pair lỗi hoặc Agent OFFLINE | Mã đã hết hạn/dùng rồi; chưa start heartbeat; khác Windows user | Tạo mã mới, chạy Agent cùng Windows identity đã pair; xem [DEVICES](../DEVICES.md) trước khi recovery |
+| Docker CLI treo, port mở nhưng API không trả lời | Docker Engine chưa phản hồi hoặc thiếu dung lượng ổ chứa Docker | Kiểm tra dung lượng và trạng thái Docker Desktop; cổng mở chưa chứng minh dịch vụ hoạt động. Giữ dữ liệu/volume, không dùng reset hoặc prune để thử sửa lỗi |
 
 Khi cần xem trạng thái Docker:
 

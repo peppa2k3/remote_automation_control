@@ -16,7 +16,7 @@
     "lint": "eslint . && prettier --check . && pnpm docs:check",
     "format": "prettier --write .",
     "typecheck": "pnpm db:generate && pnpm --filter @automation/contracts build && pnpm -r typecheck",
-    "test": "pnpm --filter @automation/contracts build && pnpm -r test",
+    "test": "node --test scripts/*.test.mjs && pnpm --filter @automation/contracts build && pnpm -r test",
     "build": "pnpm db:generate && pnpm -r build",
     "db:generate": "pnpm --filter @automation/backend db:generate",
     "db:migrate": "pnpm --filter @automation/backend db:migrate",
