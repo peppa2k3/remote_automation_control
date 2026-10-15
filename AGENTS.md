@@ -9,6 +9,7 @@
 - Không sửa `.env` thật, DB/shared bucket hoặc dữ liệu ngoài task; không reset DB, deploy VPS hay publish nếu chưa được yêu cầu.
 - Thay DB bằng migration, thay payload qua `packages/contracts`; cập nhật env mẫu/guide khi đổi cấu hình. Quyết định kiến trúc mới ghi ADR.
 - Không thêm dependency/hạ tầng hoặc viết test cho sửa tài liệu đơn giản; sửa logic cần kiểm tra đúng rủi ro.
+- Dùng `pnpm codegraph explore "<symbol/luồng>"` và `pnpm codegraph affected <file>` để định vị code/test; `pnpm codegraph sync` sau sửa bằng CLI. Graph hỗ trợ phân tích, không thay kiểm tra code/quyền hoặc test. Hướng dẫn: `docs/guides/codegraph.md`.
 
 ## Vòng đời công việc
 

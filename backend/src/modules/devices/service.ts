@@ -270,11 +270,12 @@ export class DeviceService {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 100,
       include: {
-        members: { where: { userId } },
+        members: { where: { userId }, select: { role: true } },
         credentials: {
           where: { activatedAt: { not: null }, revokedAt: null, expiresAt: { gt: now } },
           orderBy: { createdAt: 'desc' },
           take: 1,
+          select: { tokenHash: true },
         },
       },
     });
@@ -313,7 +314,11 @@ export class DeviceService {
   ) {
     const device = await db.device.findUnique({
       where: { id: deviceId },
-      include: { members: { where: { userId } } },
+      select: {
+        ownerId: true,
+        revokedAt: true,
+        members: { where: { userId }, select: { userId: true } },
+      },
     });
     if (!device || (device.ownerId !== userId && (ownerOnly || !device.members.length)))
       throw new AuthError(403, 'DEVICE_ACCESS_DENIED', 'Bạn không có quyền truy cập thiết bị này.');
@@ -323,7 +328,7 @@ export class DeviceService {
     await this.access(this.db, deviceId, userId, true);
     const rows = await this.db.deviceMember.findMany({
       where: { deviceId },
-      include: { user: true },
+      select: { userId: true, role: true, user: { select: { email: true } } },
       orderBy: { userId: 'asc' },
       take: 100,
     });
@@ -339,7 +344,10 @@ export class DeviceService {
       await this.lock(tx, deviceId);
       const device = await this.access(tx, deviceId, ownerId, true);
       if (device.revokedAt) throw new AuthError(409, 'DEVICE_REVOKED', 'Thiết bị đã bị thu hồi.');
-      const user = await tx.user.findUnique({ where: { email: input.email } });
+      const user = await tx.user.findUnique({
+        where: { email: input.email },
+        select: { id: true, status: true },
+      });
       if (!user || user.status !== 'ACTIVE')
         throw new AuthError(404, 'USER_NOT_FOUND', 'Tài khoản chưa được tạo hoặc đã khóa.');
       if (user.id === device.ownerId)

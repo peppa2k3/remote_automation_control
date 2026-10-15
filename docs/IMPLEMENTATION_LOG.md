@@ -94,3 +94,13 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - PASS với PostgreSQL 17 biệt lập: 4 migrations, 13 integration tests, auth/SSR/CSRF/session smoke và native Windows 10 Agent DPAPI/restart/rotation/outage/reconnect/revoke/log smoke. Dọn DB fixture và dừng DB tạm; không sửa env/runtime DB của người dùng.
 - Chưa nghiệm thu máy Windows 11 mới, browser click sau sửa CSRF, Docker images hoặc VPS/domain thật; gate 005 giữ PARTIAL. Đây là core giám sát để bắt đầu chạy, chưa bảo đảm vận hành 24/7.
 - Commit reference: `refactor(025): simplify corebase first-run setup`.
+
+## 2026-10-15 — 026 — CodeGraph và tối ưu core
+
+- Cài CodeGraph 1.6.2 được pin trong devDependencies, `pnpm codegraph`, config loại env/build/generated/reference/test data. Index local 73 files/821 nodes/1.967 edges, không commit hoặc copy vào Docker context.
+- Cấu hình MCP Codex riêng workspace; JSON-RPC initialize/tools/list/explore smoke PASS. Telemetry off; không sửa config Codex toàn máy. Đã dùng explore/node/impact/affected/sync để xác định code và test liên quan.
+- Thu hẹp SELECT ở DeviceService list/access/members/setMember, tránh đọc trường thừa/password hash. Thêm deadline 10 giây cho login/session UI. Giữ DTO, quyền, DB schema và logic Agent.
+- PASS: lint/typecheck/build, 42 tests, 13 DB integration, auth/SSR/CSRF/session và native Windows 10 DPAPI/restart/rotation/outage/reconnect/revoke/log smoke. Test đầu đồng thời bị 1 DPAPI timeout; full test chạy lại sau build và native smoke đạt, không sửa DPAPI/test timeout.
+- DB PostgreSQL 17 tạm biệt lập đã dọn/dừng; không sửa env/runtime DB. Guide ngắn tại `docs/guides/codegraph.md`, prompt 026 DONE.
+- Giới hạn: 5 graph references chưa resolve; chưa UI click/benchmark/Docker image/Windows 11/VPS thật. CLI bundle tăng dung lượng dev dependencies; không nhập vào runtime source. Gate 005 giữ PARTIAL.
+- Commit reference: `feat(026): add CodeGraph and streamline core queries`.

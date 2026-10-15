@@ -19,6 +19,7 @@ Kết nối **Windows Agent → server → web**, xem online/offline, uptime, RA
 | Tiến độ phát triển | [CORE_ROADMAP](docs/CORE_ROADMAP.md), [nhật ký](docs/IMPLEMENTATION_LOG.md) |
 
 Kiểm tra code: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
+Phân tích source/dependency: [CodeGraph](docs/guides/codegraph.md), chạy `pnpm codegraph init --yes` tại root.
 Kiểm tra sau khi bật web/API: `pnpm stack:check` và `pnpm agent:diagnose`.
 
 Đã có kiểm thử tự động và runtime local biệt lập; lần chạy trên máy Windows 11/VPS của bạn cần kiểm chứng theo guide. Thiết kế automation cũ ở [archive](docs/archive/automation-baseline.md); source `remote-control-agent-core-base/` chỉ để tham khảo.

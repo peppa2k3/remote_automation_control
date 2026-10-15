@@ -1,0 +1,16 @@
+{
+  "exclude": [
+    "remote-control-agent-core-base/",
+    ".verification/",
+    "**/node_modules/",
+    "**/dist/",
+    "**/.next/",
+    "backend/src/generated/",
+    "**/.env",
+    "**/.env.*",
+    "automation-data/",
+    "credentials/",
+    "browser-profiles/"
+  ],
+  "deprioritize": ["scripts/", "**/tests/"]
+}

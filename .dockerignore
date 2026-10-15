@@ -10,6 +10,8 @@
 **/*.log
 **/*.tsbuildinfo
 .verification
+.codegraph
+.codex
 automation-data
 credentials
 browser-profiles

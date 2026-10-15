@@ -17,6 +17,7 @@
     "agent:pair": "pnpm --filter @automation/agent-windows pair",
     "agent:start": "pnpm --filter @automation/agent-windows start",
     "stack:check": "node scripts/check-stack.mjs",
+    "codegraph": "codegraph",
     "dev": "concurrently -k -n api,web \"pnpm --filter @automation/backend dev\" \"pnpm --filter @automation/frontend dev\"",
     "lint": "eslint . && prettier --check . && pnpm docs:check",
     "format": "prettier --write .",
@@ -30,6 +31,7 @@
     "agent:smoke": "node scripts/smoke-agent.mjs"
   },
   "devDependencies": {
+    "@colbymchenry/codegraph": "1.6.2",
     "@eslint/js": "10.0.1",
     "@next/eslint-plugin-next": "16.4.0",
     "@types/node": "24.19.2",

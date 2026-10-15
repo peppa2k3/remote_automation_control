@@ -20,6 +20,7 @@ export function LoginForm() {
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
+        signal: AbortSignal.timeout(10_000),
       });
       const parsed = authResponseSchema.safeParse(await response.json());
       if (!response.ok || !parsed.success || !parsed.data.success) {

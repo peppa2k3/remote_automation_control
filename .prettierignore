@@ -4,6 +4,7 @@ dist
 coverage
 backend/src/generated
 .verification
+.codegraph
 pnpm-lock.yaml
 **/*.md
 frontend/next-env.d.ts

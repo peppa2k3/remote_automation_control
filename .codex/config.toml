@@ -1,0 +1,9 @@
+[mcp_servers.codegraph]
+command = "node"
+args = ["node_modules/@colbymchenry/codegraph/npm-shim.js", "serve", "--mcp"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+
+[mcp_servers.codegraph.env]
+CODEGRAPH_TELEMETRY = "0"
+CODEGRAPH_NO_DOWNLOAD = "1"

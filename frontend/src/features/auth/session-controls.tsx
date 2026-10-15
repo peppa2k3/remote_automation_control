@@ -18,6 +18,7 @@ export function SessionControls({ initial }: { initial: AuthData }) {
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': session.csrfToken },
         body: '{}',
+        signal: AbortSignal.timeout(10_000),
       });
       const body = await response.json();
       if (!response.ok) {
