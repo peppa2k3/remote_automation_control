@@ -2,6 +2,8 @@
 
 Theo yêu cầu 14/10/2026, ưu tiên kết nối và quản lý thiết bị trước tự động hóa. Giữ các prompt/lịch sử cũ để truy nguyên; không chạy tuần tự backlog tải file/publish chỉ vì số thứ tự nhỏ hơn.
 
+Đợt 025 gom context/guides cho máy mới; luồng chạy chính tại [start-here](guides/start-here.md). Chưa chuyển sang tính năng điều khiển.
+
 | Bước | Làm được gì | Gate trước bước tiếp |
 |---|---|---|
 | 01 — prompt 021 | Login, pair, owner/member, heartbeat, thông tin máy, activity, hướng dẫn local/VPS | Test local đạt; tự nghiệm thu VPS thật theo guide |

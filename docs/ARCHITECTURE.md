@@ -1,84 +1,46 @@
-# Kiến trúc Home Automation Control Platform
+# Kiến trúc corebase
 
-## Ưu tiên core từ 14/10/2026
-
-Theo [ADR 003](ADR/003-core-device-manager.md), mục tiêu trước mắt là Local Windows → server/VPS → web manager. Giữ Next.js/Express/PostgreSQL/DPAPI; tiếp nhận ownership, members và sự phân biệt unknown/offline từ starter. Mỗi máy một owner; member viewer/operator hiện chỉ được xem. Heartbeat REST 5s, offline 25s; FE lấy snapshot REST mỗi 5s, xóa snapshot khi mất server. Backend restart cần heartbeat mới. Runtime aggregate (uptime/RAM/CPU count) và activity được lưu DB, chỉ trả cho owner/member. Không có Socket.IO/lease/executor/MeshCentral ở bước này.
-
-Mẫu VPS một domain: proxy `/api/v1/agent/*` và `/api/v1/health/*` tới BE, các route còn lại tới Next. Native local vẫn hai port. Hướng dẫn [start-here](guides/start-here.md), [VPS](guides/vps-setup.md), lộ trình [CORE_ROADMAP](CORE_ROADMAP.md). Các phần workflow/publish bên dưới là thiết kế dài hạn từ baseline cũ.
-
-## Phân tích bài toán
-
-Sản phẩm giảm thao tác thường ngày xuống dán URL và gửi. VPS giữ cấu hình, quyền, jobs và kết quả; máy Windows tại nhà chịu download/media. Điểm khó nhất là phục hồi khi Agent offline, tránh publish trùng và xác minh quyền Meta sớm. Với một chủ sở hữu và một Agent, modular monolith + PostgreSQL đáp ứng MVP mà không cần thêm message broker.
-
-## Kiến trúc mục tiêu
+## Luồng kết nối
 
 ```mermaid
 flowchart LR
-  UI[Browser / Next.js PWA] -->|HTTPS| Proxy[Traefik hiện hữu]
-  Proxy --> FE[Next.js]
-  Proxy --> API[Express / Socket.IO]
-  API --> DB[(PostgreSQL 17)]
-  Agent[Windows Agent native] -->|outbound claim / heartbeat / result| API
-  Agent --> Workers[Downloader / file / FFmpeg]
-  Agent -->|presigned HTTPS| Storage[(MinIO hiện hữu)]
-  API --> Storage
-  API -->|token server-side| Meta[Meta Pages API]
+  B[Browser] --> F[Next.js web / proxy]
+  F --> A[Express API]
+  W[Windows Agent] -->|outbound heartbeat| A
+  A --> D[(PostgreSQL 17)]
 ```
 
-Không mở cổng vào Agent. Windows Service chạy headless; worker GUI tương lai chạy trong user session riêng. Socket mất kết nối không làm mất job vì DB là nguồn sự thật.
+Browser gọi auth/device qua Next cùng origin. Next chuyển cookie/CSRF tới API. Agent gọi API trực tiếp bằng bearer riêng; PostgreSQL là nguồn dữ liệu và quyền.
 
-## Ranh giới module
-
-| Module | Trách nhiệm | Không sở hữu |
-|---|---|---|
-| `frontend` | UI, PWA, trạng thái qua REST và realtime | Secret, DB, quyết định quyền |
-| `backend` | Auth, device, workflow, job queue, audit, provider | Desktop/FFmpeg tại nhà |
-| `agent-windows` | Worker native, claim/lease, tài nguyên local | Meta token, quyền admin |
-| `packages/contracts` | Zod schema, DTO, envelope versioned | ORM, Express, React |
-| `infrastructure/compose` | Stack local độc lập, migration | Thay đổi hạ tầng VPS đang dùng |
-
-Backend dùng dependency injection để test health/DB và sau này provider/queue. Shared package biên dịch trước các consumer. Không import nội bộ giữa backend/frontend/Agent.
-
-## Queue và publishing dự kiến
-
-Tạo run + jobs trong SQL transaction. Claim bằng `FOR UPDATE SKIP LOCKED`, lease token và thời gian hết hạn. Chỉ holder hợp lệ được renew/complete. Unique idempotency key chống tạo job lặp. Không giữ transaction trong lúc download/upload.
-
-Publisher ở VPS: lưu fingerprint và external state trước side effect; timeout sau upload chuyển `UNKNOWN_EXTERNAL_STATUS`, reconcile trước retry. Token Page được mã hóa tại backend, Agent chỉ nhận presigned URL giới hạn object/TTL.
-
-## Phần khởi tạo hiện tại
-
-- pnpm monorepo, TypeScript strict, ESLint, Vitest, CI và build từng package.
-- Next.js login và dashboard yêu cầu session server-side; proxy auth cùng origin, trạng thái kết nối API/DB, manifest + icon nền PWA. Offline cache/installability đầy đủ thuộc prompt Dashboard, chưa cache dữ liệu riêng tư.
-- Express `/api/v1/health/live`, `/health/ready`, envelope, request correlation, lỗi an toàn, CORS allowlist, Helmet và rate limit.
-- Prisma `SystemCheck` cho integration migration, User/AuthSession/AuthThrottle/AuditLog cho auth 004, PostgreSQL 17 local Compose, Dockerfile API/FE. Các bảng nghiệp vụ khác thuộc prompt tương ứng.
-- Auth dùng scrypt + session opaque hash ở PostgreSQL, CSRF/Origin, durable login throttle, owner CLI và quyền server-side; [AUTH](AUTH.md) và [ADR 001](ADR/001-admin-sessions.md). MFA mới có kế hoạch, device auth tách riêng.
-- Agent có diagnose, pair/heartbeat/rotate và vòng lặp reconnect outbound; credential DPAPI CurrentUser, không listener/claim/job runner. Backend devices có pairing one-use, scoped identity, online/offline/revoke/rotation; owner UI tại /devices. [DEVICES](DEVICES.md), [ADR 002](ADR/002-device-identity.md); đã test native Windows 10, gate Windows 11 còn pending.
-- Socket.IO, FFmpeg, MinIO và Meta thuộc prompt riêng; chưa kết nối service/provider thật.
-
-## Cấu hình và dữ liệu
-
-Env được kiểm tra bằng Zod trước khi start. Development host mặc định loopback; Compose bind process nội bộ `0.0.0.0` nhưng publish cổng trên host `127.0.0.1`. Database trong full stack không expose host; profile DB riêng phục vụ native dev chỉ bind loopback. Không có credentials mặc định cho production.
-
-Timestamps lưu UTC; UI tương lai hiển thị `Asia/Ho_Chi_Minh` theo baseline. Secret mới đi qua `.env` không commit; `.env.example` chỉ chứa cấu hình mẫu và placeholder.
-
-## Gates và rủi ro
-
-| Gate | Bằng chứng yêu cầu |
+| Thư mục | Trách nhiệm |
 |---|---|
-| Bootstrap | Lint/typecheck/unit/build + runtime smoke |
-| Database | Migration, readiness 200 với DB; 503 khi DB lỗi |
-| Connection | Auth + pairing + queue durable + dashboard demo |
-| Files | SSRF/DNS/redirect tests, checksum, timeout, disk limits |
-| Facebook | Token/quyền và một bài thử trên Page được chỉ định |
-| Stable 24/7 | Restart, mất mạng, backup/restore và no double publish |
+| `frontend/src/app/`, `frontend/src/features/` | Login, dashboard, devices, session và proxy allowlist |
+| `backend/src/modules/auth/` | Password, session, CSRF, throttle, CLI tạo tài khoản |
+| `backend/src/modules/devices/` | Pair, heartbeat, owner/member, revoke, runtime/activity |
+| `backend/prisma/` | Schema và migrations |
+| `agent-windows/src/core/` | CLI, HTTP client, reconnect, rotation, kho DPAPI |
+| `packages/contracts/` | Zod schemas và DTO chung |
+| `infrastructure/compose/`, `infrastructure/vps/` | Local DB/stack và VPS HTTPS |
 
-Thông số VPS/domain/MinIO/Page vẫn cần chủ dự án cung cấp khi làm prompt tương ứng. Tài liệu này không xác nhận quyền Meta hoặc hạ tầng production.
+## Quyền và vòng đời kết nối
 
-## Nguồn kỹ thuật đã đối chiếu
+1. `owner:bootstrap` tạo tài khoản đầu tiên; `user:create` thêm user. Session hết hạn sau 30 phút, gia hạn tối đa 8 giờ từ login.
+2. User tạo mã pair 5 phút/dùng một lần. Agent xác nhận URL + nhập mã, lưu credential DPAPI CurrentUser; DB chỉ lưu hash.
+3. Agent heartbeat 5 giây và gửi hostname, uptime, RAM, CPU count. Lỗi mạng retry bằng backoff; credential lỗi thì dừng.
+4. Web lấy snapshot mỗi 5 giây. ONLINE cần heartbeat trong 25 giây, credential còn hạn và heartbeat sau lần start API. API restart phải chờ heartbeat mới.
+5. Web mất server/phiên thì xóa snapshot, báo unknown. OFFLINE chỉ được suy ra khi server vẫn trả snapshot hợp lệ.
+6. Owner/member xem máy; chỉ owner device chia sẻ/revoke. VIEWER/OPERATOR hiện chỉ xem. Global OWNER không có quyền ngầm với device khác.
+7. Credential TTL 24 giờ, tự rotate khi còn dưới 6 giờ. Offline quá hạn cần revoke/pair lại. Revoke vô hiệu cả active/pending token.
 
-- [Next.js installation](https://nextjs.org/docs/app/getting-started/installation) và [Next.js 16 upgrade](https://nextjs.org/docs/app/guides/upgrading/version-16): App Router và ESLint CLI riêng.
-- [Prisma generators](https://www.prisma.io/docs/orm/v7/prisma-schema/overview/generators), [Prisma configuration](https://docs.prisma.io/docs/orm/reference/prisma-config-reference): generated client có output riêng, kết nối qua PostgreSQL adapter.
-- [pnpm 11 release](https://pnpm.io/blog/releases/11.0): build-script allowlist dùng `allowBuilds`, settings nằm trong `pnpm-workspace.yaml`.
-- [Prisma Docker guide](https://docs.prisma.io/docs/guides/deployment/docker): Debian slim cần OpenSSL cho migration engine.
+## Địa chỉ
 
-Phiên bản package được pin trong manifests và lockfile; không tự chọn pre-release từ registry.
+| Kết nối | Local mặc định | VPS |
+|---|---|---|
+| Browser → web | `http://localhost:3000` | `https://<domain>` |
+| Next → API | `http://localhost:4000/api/v1` | `http://backend:4000/api/v1` trong Docker |
+| Windows Agent → API | `http://localhost:4000/api/v1` | `https://<domain>/api/v1` |
+| API → DB | `localhost:5432` | `postgres:5432` trong mạng riêng |
+
+VPS proxy `/api/v1/agent/*`, `/api/v1/health/*` tới backend; các route còn lại tới Next. Local dùng cùng `localhost` cho URL web và Origin; không trộn `127.0.0.1`. Chạy một backend instance.
+
+Hiện chưa có lease, executor, desktop, queue/publish hoặc Windows Service. Theo [CORE_ROADMAP](CORE_ROADMAP.md) khi phát triển tiếp; thiết kế cũ nằm trong [archive](archive/automation-baseline.md). Bắt đầu chạy tại [start-here](guides/start-here.md).

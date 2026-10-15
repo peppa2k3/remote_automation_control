@@ -1,40 +1,21 @@
-# Quy tắc làm việc của AI Agent
+# Quy tắc AI Agent
 
-Ưu tiên hiện tại theo yêu cầu 14/10/2026: [CORE_ROADMAP](docs/CORE_ROADMAP.md), ADR 003 và prompt 021. Hoàn thiện core kết nối/giám sát trước lease điều khiển/script/desktop. Source `remote-control-agent-core-base` chỉ tham khảo, không chạy như workspace thứ hai. Dùng hướng dẫn [start-here](docs/guides/start-here.md) cho người mới. Auth hệ thống và owner/member theo device là hai lớp quyền khác nhau; không cấp quyền device ngầm cho admin hệ thống.
+Đọc `PROJECT_CONTEXT.md`, `docs/ARCHITECTURE.md`, prompt liên quan và code trước khi sửa. Bản context tại gốc và `docs/PROJECT_CONTEXT.md` phải giống byte-for-byte. Tài liệu/thông báo tiếng Việt; code tiếng Anh.
 
-Đọc toàn bộ `docs/PROJECT_CONTEXT.md`, `docs/CONTEXT_RULES.md`, `docs/ARCHITECTURE.md`, prompt đang xử lý và mã liên quan trước khi thay đổi. `PROJECT_CONTEXT.md` ở gốc là bản nguồn; bản trong docs phải đồng bộ byte-for-byte. Tài liệu và thông báo dùng tiếng Việt; code, API, schema dùng tiếng Anh.
+- Ưu tiên core login → pair → heartbeat → web giám sát; chưa mở rộng automation khi không được yêu cầu.
+- Giữ Next.js/Express/PostgreSQL/Prisma, Node.js 24 và Agent native Windows. Source `remote-control-agent-core-base/` chỉ tham khảo.
+- Kiểm tra owner/member tại backend; global OWNER không bypass quyền device. Session user và bearer device riêng.
+- Agent outbound; không shell/eval, chạy file tải về hoặc mở inbound. Không log password/code/token/cookie.
+- Không sửa `.env` thật, DB/shared bucket hoặc dữ liệu ngoài task; không reset DB, deploy VPS hay publish nếu chưa được yêu cầu.
+- Thay DB bằng migration, thay payload qua `packages/contracts`; cập nhật env mẫu/guide khi đổi cấu hình. Quyết định kiến trúc mới ghi ADR.
+- Không thêm dependency/hạ tầng hoặc viết test cho sửa tài liệu đơn giản; sửa logic cần kiểm tra đúng rủi ro.
 
-## Phạm vi và kiến trúc
+## Vòng đời công việc
 
-- Giữ Next.js App Router + Tailwind, Express + Zod, PostgreSQL 17 + Prisma, Agent Node.js native Windows. Node.js 24 LTS.
-- VPS là control plane; Agent kết nối outbound. Không mở inbound, generic shell, eval hay thực thi file tải xuống.
-- Job/lease/idempotency phải lưu PostgreSQL. Socket.IO chỉ thông báo; polling/REST phục hồi trạng thái.
-- Không thêm Redis, n8n, microservice hoặc thay DB nếu prompt không yêu cầu. Quyết định kiến trúc quan trọng cần ADR.
-- Auth admin và thiết bị tách riêng. Meta/OAuth secret chỉ tồn tại server-side, được mã hóa. Không đưa vào client/Agent/log/Git.
-- SSRF: kiểm tra allowlist, DNS, địa chỉ IP và từng redirect trước khi tải; streaming giới hạn byte, timeout và workspace theo run.
-- Public publish phải qua feasibility gate, destination được cấu hình và policy preauthorized. Không blind retry khi kết quả external chưa rõ.
+1. Chọn/tạo prompt có dependencies đạt trong `docs/promt/`, chuyển nguyên file vào `docs/processing/`.
+2. Nêu phạm vi và cách kiểm tra ngắn, rồi thực hiện.
+3. Chạy `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`; kiểm tra runtime khi thay kết nối/auth/DB. Dùng DB test biệt lập.
+4. Ghi kết quả thực, giới hạn và checklist; chỉ chuyển sang `docs/completed/` khi acceptance đạt. Gate chưa đạt giữ PARTIAL trong processing.
+5. Append `docs/IMPLEMENTATION_LOG.md`, commit riêng nếu Git identity có sẵn. Không sửa lịch sử hoặc ghi PASS cho kiểm tra chưa chạy.
 
-## Quy trình prompt bắt buộc
-
-1. Chọn `docs/promt/NNN-short-name.md` có dependencies đạt; chuyển nguyên file vào `docs/processing/`.
-2. Nêu mục tiêu, phạm vi file, dependencies, giả định/rủi ro và kế hoạch kiểm tra ngắn trước khi code.
-3. Triển khai phạm vi nhỏ của prompt; giữ thay đổi ngoài scope ở backlog.
-4. Chạy `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` và kiểm tra thực tế phù hợp. Không ghi PASS cho lệnh chưa chạy.
-5. Cập nhật checklist, files changed, bằng chứng test, cấu hình thủ công, giới hạn, security review và commit reference trong prompt.
-6. Chỉ khi acceptance gate đạt mới chuyển vào `docs/completed/`. Nếu thiếu môi trường/quyền, giữ `processing`, ghi PARTIAL/BLOCKED và điều kiện tiếp tục.
-7. Sau mỗi prompt hoàn thành, **append** một mục vào `docs/IMPLEMENTATION_LOG.md`; không xóa lịch sử. Ghi việc đã làm, test và giới hạn.
-8. Commit riêng từng prompt nếu có Git identity. Prompt ghi commit subject duy nhất; log có thể ghi SHA sau commit (tránh tự tham chiếu SHA trong chính commit).
-
-## An toàn dữ liệu và vận hành
-
-- Không sửa `.env` thật của người dùng, DB production, bucket dùng chung, browser profile hay dữ liệu ngoài workspace của task.
-- Chỉ local dev được phép tạo stack/volume riêng theo README. Không deploy VPS hoặc đăng công khai từ yêu cầu bootstrap.
-- Không commit secrets, dữ liệu tải về, signed URLs, logs, generated code hoặc build output.
-- Validate request bằng schema, authorize server-side, log correlation `requestId/runId/jobId`; không log body chứa secret.
-- Không vượt CAPTCHA/MFA/DRM/paywall; không đoán domain, Page ID, token, Traefik network hoặc MinIO hiện hữu.
-- Khi làm tích hợp bên ngoài, đọc tài liệu chính thức hiện hành. Mock và kết quả thật phải ghi rõ.
-- Không đánh dấu production-ready trước khi kiểm thử hệ thống và provider thật có quyền.
-
-## Kết quả mỗi prompt
-
-Ghi ID/tên, DONE/PARTIAL/BLOCKED, thay đổi, lệnh và kết quả thực, cấu hình còn cần, rủi ro, commit reference và prompt tiếp theo. Kiểm tra `pnpm docs:check` để tránh prompt trùng ID, dependency sai hoặc hai bản context lệch nhau.
+Hướng dẫn máy mới: [start-here](docs/guides/start-here.md). Quy trình tài liệu: [CONTEXT_RULES](docs/CONTEXT_RULES.md). Prompt 005 vẫn PARTIAL do gate Windows 11; không coi test Windows 10 là thay thế.

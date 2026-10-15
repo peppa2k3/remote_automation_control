@@ -1,21 +1,24 @@
-# Database khởi tạo
+# Database core
 
-Core 021 thêm migration `20261014000100_device_manager`: `devices.ownerId` FK users (nullable để giữ lịch sử khi user bị xóa), `devices.runtime` JSONB, `device_members` với khóa kép deviceId/userId và enum OPERATOR/VIEWER. Thiết bị cũ được backfill sang owner hệ thống hiện tại; thiết bị không còn owner/member không được trả cho người dùng. Pair mới luôn gán ownerId từ người tạo mã. Migration chỉ bổ sung, không reset hoặc xóa schema cũ. Global OWNER duy nhất vẫn là tài khoản bootstrap; không tự có quyền mọi máy. Uptime/RAM là snapshot tại heartbeat cuối, không phải chuỗi time-series; activity tối đa 50 bản ghi đọc từ audit_logs.
+PostgreSQL 17 + Prisma; UUID và timestamps UTC. Schema tại `backend/prisma/schema.prisma`, thay đổi qua `backend/prisma/migrations/`.
 
-PostgreSQL 17, Prisma ORM, timestamps UTC. Migration ban đầu chỉ tạo `SystemCheck` (UUID, label unique, createdAt/updatedAt) dùng kiểm thử write/read/delete trên database local/CI biệt lập. Không dùng bảng này làm queue.
+| Dữ liệu | Vai trò |
+|---|---|
+| `users`, `auth_sessions`, `auth_throttles` | Tài khoản, session hash, giới hạn đăng nhập |
+| `devices`, `device_members` | Owner/member, metadata, lastSeenAt, runtime snapshot |
+| `pairing_codes`, `device_credentials` | Hash mã/token, TTL, rotation/revoke |
+| `audit_logs` | Lịch sử auth/device; không chứa secret |
+| `SystemCheck` | Fixture kiểm tra DB, không phải queue |
 
-Schema business và các unique/index từ mục 5 `PROJECT_CONTEXT.md` được thêm qua migration trong prompt auth/device/queue tương ứng. Không chạy reset/db push trên DB có dữ liệu.
+```powershell
+pnpm db:up
+pnpm db:migrate
+```
 
-Migration `20261013000200_admin_auth` thêm enums UserRole/UserStatus và bảng users, auth_sessions, auth_throttles, audit_logs. Email unique; session tokenHash char(64) unique, FK user cascade, indexes user/revokedAt và expiry; throttle key hash char(64) + resetAt; audit indexes thời gian/id và actor/thời gian. Audit actorId/targetId giữ UUID lịch sử, không FK để không xóa audit khi xóa user.
+`db:up` đợi DB healthy. `db:migrate` chạy migrations đã commit; `pnpm build` tự generate Prisma Client. Không dùng reset/db push với dữ liệu cần giữ.
 
-Partial unique index `users_one_owner` trên role WHERE role='OWNER' đảm bảo chỉ một owner; Prisma schema không biểu diễn đầy đủ partial index này, phải giữ migration SQL và không thay bằng db push. Owner bootstrap, login budgets và session rotation/revoke dùng SQL advisory transaction locks; kết quả hàm lock kiểu void dùng executeRaw để tránh lỗi deserialize Prisma.
+Pair khóa theo mã; heartbeat/rotate/revoke khóa theo device và ghi transaction. OWNER hệ thống duy nhất có partial unique index; không tự có quyền mọi device. ONLINE được suy ra khi đọc, không là cột cho client ghi.
 
-Integration auth yêu cầu DB test riêng chưa có owner, kiểm tra bootstrap đồng thời, unique owner, role negative, hash-only session, refresh/revoke race, trạng thái user và throttle durable. Test không xóa owner đã tồn tại; fixtures có UUID riêng và được dọn trong finally/afterAll. Chưa có cleanup job hoặc retention policy tự động cho các bảng auth/audit.
+DB native (`postgres-dev-data`) khác DB full stack (`postgres-data`); VPS có volume riêng. `setup:local` chỉ tạo env thiếu, không đổi password của DB đã khởi tạo. Chưa có retention/cleanup định kỳ cho audit/credential hết hạn.
 
-`pnpm db:generate` không cần DB chạy; `pnpm db:migrate` chạy migration đã commit. Integration test chỉ chạy khi `RUN_DB_TESTS=1` và dùng URL DB local/CI. Không tự trỏ vào DB shared/production. Database test tạo record có label UUID riêng rồi xóa đúng record đó; kiểm tra unique label và ready 200 với DB thật, ready 503/live 200 khi kết nối DB không khả dụng.
-
-`pnpm setup:local` tạo env mới bằng ghi exclusive (không ghi đè), mật khẩu hex ngẫu nhiên phù hợp connection URL. Dev DB/volume `postgres-dev-data` khác DB full stack `postgres-data`.
-
-Migration `20261013000300_device_pairing` thêm pairing_codes (codeHash unique, owner FK, expiry/usedAt), devices (metadata/lastSeenAt/revokedAt), device_credentials (tokenHash unique, scopes/expiry/activation/pending, rotationParentId unique). Không lưu code/token rõ. Online state được suy ra lúc đọc, không là cột client có thể ghi. Pair lock theo code; heartbeat/rotate/revoke lock theo device, mutation/audit transaction. Device FK cascade xóa đúng credentials fixture; audit không tự cascade.
-
-Backend integration chạy tuần tự giữa files (`--no-file-parallelism`) vì OWNER unique toàn DB; test chỉ dùng owner/label/UUID của fixture. Chưa cleanup/retention định kỳ cho pairing/credential hết hạn. Win11 smoke cần DB test riêng không có user/device; không dùng DB runtime để test.
+Integration tests chỉ dùng **DB test riêng, đã migrate, không có owner thật**. Đặt `DATABASE_URL` đến DB test trong process, rồi chạy `RUN_DB_TESTS=1 pnpm --filter @automation/backend test:integration` (PowerShell: đặt `$env:RUN_DB_TESTS='1'` trước). Runtime smoke dùng thêm `SMOKE_DATABASE_URL` cùng DB test; không chạy với DB đang sử dụng.

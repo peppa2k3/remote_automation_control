@@ -32,6 +32,8 @@ export function SessionControls({ initial }: { initial: AuthData }) {
         if (!parsed.success || !parsed.data.success) throw new Error('INVALID_RESPONSE');
         setSession(parsed.data.data);
         setMessage('Đã gia hạn session.');
+        // Refresh server-rendered consumers of the rotated CSRF token (e.g. DevicePanel).
+        router.refresh();
       } else {
         router.replace('/login');
         router.refresh();

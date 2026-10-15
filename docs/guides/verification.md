@@ -1,19 +1,29 @@
-# Kiểm tra và xử lý lỗi local
+# Kiểm tra kết nối
 
-Chạy ở root sau khi đã làm theo [thiết lập local](local-setup.md). Các lệnh dưới đây chỉ kiểm tra dịch vụ/đọc trạng thái, trừ lệnh migration/bootstrap được nêu trong guide thiết lập.
+Khi web/API đang chạy:
 
 ```powershell
-Invoke-RestMethod http://localhost:4000/api/v1/health/live
-Invoke-RestMethod http://localhost:4000/api/v1/health/ready
 pnpm stack:check
-pnpm --filter @automation/agent-windows diagnose
+pnpm agent:diagnose
 ```
 
-`stack:check` kiểm tra cả FE/API/DB, redirect dashboard ẩn danh và assets. Sau đó đăng nhập ở `http://localhost:3000/login`, mở `/devices`, tạo mã pair và kiểm tra thiết bị chuyển ONLINE sau khi Agent `start` heartbeat. Nếu chỉ muốn gửi một heartbeat rồi thoát, chạy `pnpm --filter @automation/agent-windows heartbeat` trên Windows đã pair.
+PASS xác nhận web/API/DB và route cơ bản. Sau đó pair/start và xem **Agent online** tại `/devices` để xác nhận toàn luồng.
 
-Mỗi request có timeout 10 giây, kể cả khi server trả header rồi treo phần body. Lệnh tiếp tục kiểm tra các bước còn lại sau một lỗi, in gợi ý xử lý và trả exit code `1` nếu có bước lỗi. Không in nội dung response hoặc secret. PASS chỉ xác nhận kết nối và chặn khách chưa đăng nhập; vẫn cần đăng nhập/pair và kiểm tra Agent thực tế.
+| Lỗi | Xử lý |
+|---|---|
+| `pnpm` không tìm thấy | Cài Node 24, chạy `npm install --global pnpm@11.12.0`, mở terminal mới |
+| Docker không có Server hoặc lệnh treo | Mở Docker Desktop, chờ Engine; kiểm tra dung lượng ổ chứa Docker |
+| `db:up` lỗi cổng 5432 | Kiểm tra dịch vụ đang chiếm cổng; hoặc đổi `POSTGRES_DEV_PORT` và backend `DATABASE_URL` cùng nhau |
+| Migration lỗi kết nối | Chạy `pnpm db:up` thành công trước; kiểm tra DB URL/password |
+| API `live` lỗi | Kiểm tra terminal `pnpm dev` và port 4000 |
+| API `ready` lỗi | Kiểm tra PostgreSQL, `DATABASE_URL` và migration |
+| Login 503 | Kiểm tra Next `API_INTERNAL_BASE_URL` trỏ đúng backend |
+| Mutation 403 | Dùng đúng `http://localhost:3000`; Origin FE/BE phải khớp; thử đăng nhập lại |
+| Pair lỗi | Mã 5 phút/dùng một lần; kiểm tra URL, tạo mã mới, chạy terminal tương tác |
+| Agent yêu cầu pair lại | Kiểm tra đúng Windows user/server; credential có thể hết hạn hoặc bị revoke; xem [recovery](../DEVICES.md) |
+| Web unknown | Kiểm tra server/kết nối; nếu session hết 30 phút, đăng nhập lại |
 
-Để kiểm tra VPS từ máy Windows đã clone repo và cài Node/pnpm, thay domain ví dụ:
+Kiểm tra VPS từ Windows, thay domain ví dụ:
 
 ```powershell
 $env:CHECK_SITE_URL = 'https://control.example.com'
@@ -22,36 +32,6 @@ pnpm stack:check
 Remove-Item Env:CHECK_SITE_URL, Env:CHECK_API_BASE_URL
 ```
 
-Hai biến chỉ áp dụng trong terminal hiện tại, không sửa file `.env`. Đặt cả hai khi kiểm tra VPS để tránh kiểm tra nhầm API localhost. Domain cần HTTPS hợp lệ; không tắt kiểm tra chứng chỉ. Device API được kiểm tra qua frontend, đúng với cấu hình Caddy/Traefik. Trên Linux dùng `CHECK_SITE_URL=https://control.example.com CHECK_API_BASE_URL=https://control.example.com/api/v1 pnpm stack:check`.
+Linux: `CHECK_SITE_URL=https://control.example.com CHECK_API_BASE_URL=https://control.example.com/api/v1 pnpm stack:check`.
 
-| Triệu chứng | Kiểm tra đầu tiên | Cách xử lý |
-|---|---|---|
-| `live` lỗi kết nối | BE chưa chạy hoặc cổng sai | Kiểm tra `pnpm dev` hoặc `docker compose -f infrastructure/compose/compose.yml --profile stack ps`; so URL/cổng với env |
-| `live` 200, `ready` 503 | BE không kết nối được DB | Kiểm tra container DB healthy, `DATABASE_URL`, user/password/port; `localhost` cho native, `postgres` cho stack |
-| FE mở được nhưng login báo 503 | Next không tới BE | Kiểm tra `API_INTERNAL_BASE_URL`; trong container dùng `backend:4000`, native dùng `localhost:4000` |
-| Login hoặc mutation 403 | Origin/CSRF không khớp | Mở FE bằng đúng `localhost` và cổng khai báo; so `FRONTEND_ORIGIN`, `AUTH_FRONTEND_ORIGIN`; dùng UI để gửi CSRF hợp lệ |
-| Login không có owner | Chưa bootstrap đúng DB profile | Chạy `owner:bootstrap` bằng cách tương ứng; native và stack có DB riêng |
-| Port 3000/4000/5432 đã dùng | Hai chế độ cùng chạy hoặc service khác giữ port | Dừng đúng chế độ đang chạy; khi đổi port Compose phải rebuild FE và cập nhật các URL liên quan |
-| Agent `diagnose` lỗi | URL API hoặc TLS sai | So `AGENT_API_BASE_URL`; `localhost` chỉ trỏ về chính máy Agent; HTTP chỉ cho loopback local với cờ cho phép |
-| Pair lỗi hoặc Agent OFFLINE | Mã đã hết hạn/dùng rồi; chưa start heartbeat; khác Windows user | Tạo mã mới, chạy Agent cùng Windows identity đã pair; xem [DEVICES](../DEVICES.md) trước khi recovery |
-| Docker CLI treo, port mở nhưng API không trả lời | Docker Engine chưa phản hồi hoặc thiếu dung lượng ổ chứa Docker | Kiểm tra dung lượng và trạng thái Docker Desktop; cổng mở chưa chứng minh dịch vụ hoạt động. Giữ dữ liệu/volume, không dùng reset hoặc prune để thử sửa lỗi |
-
-Khi cần xem trạng thái Docker:
-
-```powershell
-docker compose -f infrastructure/compose/compose.yml --profile stack ps
-docker compose -f infrastructure/compose/compose.yml --profile stack logs --tail=100 backend frontend postgres migrate
-```
-
-Nếu đang dùng native DB, thay `--profile stack` bằng `--profile native` và xem service `postgres-dev`. Tránh đăng log/ảnh chụp chứa cookie, mã pair, token hoặc password. Không dùng `down -v` nếu muốn giữ dữ liệu.
-
-Kiểm tra chất lượng code/tài liệu:
-
-```powershell
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-```
-
-Integration DB và `agent:smoke` cần **DB test riêng, đã migrate**, không dùng DB đang có owner/device thật; xem [README](../../README.md), [DATABASE](../DATABASE.md) và [DEVICES](../DEVICES.md) trước khi chạy. `agent:smoke` trên Windows 11 là gate còn thiếu của prompt 005.
+Mỗi request có timeout 10 giây; lệnh tiếp tục các bước còn lại khi lỗi và trả exit code 1. Không reset/prune/xóa volume để thử sửa kết nối. Kiểm thử DB/DPAPI dùng DB test riêng, xem [DATABASE](../DATABASE.md) và [DEVICES](../DEVICES.md).

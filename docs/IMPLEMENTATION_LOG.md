@@ -85,3 +85,12 @@ Mỗi prompt hoàn thành append một mục: ngày (Asia/Bangkok), ID, việc �
 - Docker info vẫn timeout sau 15 giây; ổ C hiện còn khoảng 1,1 GB. Không restart engine hoặc đụng dữ liệu stack khác. Chưa build/run image VPS, deploy HTTPS thật hoặc nghiệm thu Windows 11. 022 vẫn PLANNED theo ưu tiên kiểm chứng core trước điều khiển.
 - Commit reference: `fix(021): make stack checks work through the VPS proxy`.
 - PASS: lint, typecheck, 5 script tests + 37 unit tests, build, docs lifecycle/context, diff whitespace. DB/DPAPI smoke không chạy lại ở đợt sửa công cụ này; kết quả runtime trước đó giữ theo mục 14/10, không coi fixture là bằng chứng VPS thật.
+
+## 2026-10-15 — 025 — Corebase gọn cho máy mới
+
+- Gom context/README/AGENTS/architecture và guides vào core login → pair → heartbeat → web giám sát. Một hướng dẫn chính `docs/guides/start-here.md`; baseline automation chuyển vào archive, backlog giữ riêng. Đồng bộ API/auth/device/database/security/operations và bỏ biến env tương lai.
+- Thêm lệnh DB đợi healthy và aliases Agent. Sửa gia hạn session để các form nhận CSRF mới qua router refresh; giữ quyền/identity/schema hiện tại.
+- PASS: setup mới biệt lập + không ghi đè khi chạy lại, 4 nhánh Compose config, local links, lint/typecheck, 42 tests, build/docs/diff check.
+- PASS với PostgreSQL 17 biệt lập: 4 migrations, 13 integration tests, auth/SSR/CSRF/session smoke và native Windows 10 Agent DPAPI/restart/rotation/outage/reconnect/revoke/log smoke. Dọn DB fixture và dừng DB tạm; không sửa env/runtime DB của người dùng.
+- Chưa nghiệm thu máy Windows 11 mới, browser click sau sửa CSRF, Docker images hoặc VPS/domain thật; gate 005 giữ PARTIAL. Đây là core giám sát để bắt đầu chạy, chưa bảo đảm vận hành 24/7.
+- Commit reference: `refactor(025): simplify corebase first-run setup`.

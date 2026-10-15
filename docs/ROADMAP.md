@@ -4,7 +4,7 @@ Từ 14/10/2026, làm theo [CORE_ROADMAP](CORE_ROADMAP.md) và các prompt 021�
 
 # Roadmap và trạng thái prompt
 
-Theo baseline T00–T17; đọc vị trí file để biết trạng thái hiện tại. ID là thứ tự nhận dạng, không bắt buộc thứ tự chạy tuyệt đối: **011 Meta feasibility cần chạy sớm ngay sau 004 auth** khi đã có quyền/Page; 005–010 có thể tiếp tục độc lập spike.
+Bảng dưới là backlog automation cũ, chỉ chọn khi người dùng yêu cầu. Ưu tiên hiện tại nằm ở [CORE_ROADMAP](CORE_ROADMAP.md); không tự bắt đầu Meta spike hoặc queue từ bảng này.
 
 | ID | Baseline | Prompt | Dependencies |
 |---|---|---|---|
